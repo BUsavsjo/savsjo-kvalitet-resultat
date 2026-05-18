@@ -103,7 +103,9 @@ function detectStage(ou) {
   if (haystack.includes("lågstadie") || haystack.includes("mellanstadie")) return "F-6";
   if (/vallsjö/i.test(name)) return "7-9";
   if (/sävsjö kristna/i.test(name)) return "F-9";
-  if (/hägne|rörvik|stockaryd|vrigstad|hofgård/i.test(name)) return "F-6";
+  if (/hofgård/i.test(name)) return "7-9";
+  if (/rörvik/i.test(name)) return "F-9";
+  if (/hägne|stockaryd|vrigstad/i.test(name)) return "F-6";
   return null;
 }
 
@@ -124,11 +126,11 @@ function getAllKPIIds(stage) {
 
 const PREDEFINED_SKOLENHETER = [
   { id: "V15E068400107", municipality: "0684", title: "Hägneskolan", type: "grundskola", grades: "F-6", stage: "F-6", source: "Fördefinierad Kolada OU" },
-  { id: "V15E068400501", municipality: "0684", title: "Rörviks skola", type: "grundskola", grades: "F-6", stage: "F-6", source: "Fördefinierad Kolada OU" },
+  { id: "V15E068400501", municipality: "0684", title: "Rörviks skola", type: "grundskola", grades: "F-9", stage: "F-9", source: "Fördefinierad Kolada OU" },
   { id: "V15E068400701", municipality: "0684", title: "Vallsjöskolan", type: "grundskola", grades: "7-9", stage: "7-9", source: "Fördefinierad Kolada OU" },
   { id: "V15E068401101", municipality: "0684", title: "Vrigstad skola", type: "grundskola", grades: "F-6", stage: "F-6", source: "Fördefinierad Kolada OU" },
   { id: "V15E068401401", municipality: "0684", title: "Sävsjö kristna skola", type: "grundskola", grades: "F-9", stage: "F-9", source: "Fördefinierad Kolada OU" },
-  { id: "V15E068401501", municipality: "0684", title: "Hofgårdsskolan", type: "grundskola", grades: "F-6", stage: "F-6", source: "Fördefinierad Kolada OU" },
+  { id: "V15E068401501", municipality: "0684", title: "Hofgårdsskolan", type: "grundskola", grades: "7-9", stage: "7-9", source: "Fördefinierad Kolada OU" },
   { id: "V15E068401601", municipality: "0684", title: "Stockaryds skola", type: "grundskola", grades: "F-6", stage: "F-6", source: "Fördefinierad Kolada OU" },
 ];
 
@@ -163,7 +165,7 @@ const KPI_CATALOG = [
   ] },
   { key: "svenska6", order: 12, title: "Åk 6 minst E i svenska", unit: "%", chart: "line", kpiIds: ["N15486"], source: "Kolada: N15486", localNeeded: false, stage: ["F-6", "F-9"], category: "utfall" },
   { key: "matematik6", order: 13, title: "Åk 6 minst E i matematik", unit: "%", chart: "line", kpiIds: ["N15483"], source: "Kolada: N15483", localNeeded: false, stage: ["F-6", "F-9"], category: "utfall" },
-  { key: "knowledge6", order: 14, title: "Uppnått kunskapskraven i alla ämnen årskurs 6", unit: "%", chart: "line", source: "Hypergene", localNeeded: true, stage: ["F-6", "F-9"], category: "utfall", description: "Andel av skolans elever på vårterminen i årskurs 6 som uppnått kunskapskraven i alla ämnen." },
+  { key: "knowledge6", order: 14, title: "Åk 6 uppnått betygskriterierna i alla ämnen", unit: "%", chart: "line", kpiIds: ["N15540"], source: "Kolada: N15540", localNeeded: false, stage: ["F-6", "F-9"], category: "utfall", compareMunicipality: true },
   { key: "knowledge9", order: 15, title: "Uppnått kunskapskraven i alla ämnen årskurs 9", unit: "%", chart: "line", source: "Hypergene", localNeeded: true, stage: ["7-9", "F-9"], category: "utfall", description: "Andel av skolans elever på vårterminen i årskurs 9 som uppnått kunskapskraven i alla ämnen." },
   { key: "schoolSurvey5", order: 16, title: "Skolenkäten årskurs 5", unit: "index 0-10", chart: "line", source: "Kolada, redovisas vartannat år", localNeeded: false, stage: ["F-6", "F-9"], category: "utfall", description: "Indexvärden 0-10 inom stimulans, stöd, studiero, trygghet och skolans arbete med att förhindra kränkningar. Ett högt indexvärde indikerar en positiv uppfattning hos eleverna.", series: [
     { key: "stimulans", label: "Stimulans", kpiIds: ["N15602"], color: "#14b8a6", scale: 0.1 },
@@ -356,6 +358,19 @@ function mergeLocalSeries(entity, metric, koladaSeries) {
   return merged;
 }
 
+async function addMunicipalityComparison(metric, entity, items) {
+  if (!metric.compareMunicipality || entity.type === "municipality" || metric.key === "studentAbsence") return items;
+  const municipalitySeries = metric.series
+    ? await loadKoladaMultiSeries(metric, { type: "municipality", id: MUNICIPALITY_ID, title: MUNICIPALITY_NAME })
+    : await loadKoladaSeries(metric, { type: "municipality", id: MUNICIPALITY_ID, title: MUNICIPALITY_NAME });
+  if (!municipalitySeries.length) return items;
+  const municipalityByYear = new Map(municipalitySeries.map((item) => [item.year, item]));
+  return items.map((item) => {
+    const municipalityItem = municipalityByYear.get(item.year);
+    return municipalityItem ? { ...item, municipalityValue: municipalityItem.value, municipalityName: MUNICIPALITY_NAME } : item;
+  });
+}
+
 function hasSeriesData(items, metric) {
   if (!items?.length) return false;
   if (!metric.series) return items.some((item) => Number.isFinite(Number(item.value)));
@@ -482,7 +497,7 @@ function SavsjoQualityDashboard() {
     for (const metric of KPI_CATALOG) {
       if (!isMetricVisibleForEntity(metric, currentEntity)) continue;
       const koladaSeries = metric.series ? await loadKoladaMultiSeries(metric, currentEntity) : await loadKoladaSeries(metric, currentEntity);
-      next[metric.key] = mergeLocalSeries(currentEntity, metric, koladaSeries);
+      next[metric.key] = await addMunicipalityComparison(metric, currentEntity, mergeLocalSeries(currentEntity, metric, koladaSeries));
     }
     setSeries(next);
     const emptyCount = Object.entries(next).filter(([key, items]) => {
