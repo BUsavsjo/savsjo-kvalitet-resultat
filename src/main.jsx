@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import { Download, FileText, RefreshCw, School, Building2, Database, AlertTriangle } from "lucide-react";
 import "./styles.css";
+import studentAbsenceData from "./data/franvaro_elever.json";
 
 function Card({ className = "", children }) {
   return <div className={`card ${className}`}>{children}</div>;
@@ -140,15 +141,15 @@ const SCHOOL_FALLBACK = getPredefinedSkolenheter(MUNICIPALITY_ID);
 const KPI_CATALOG = [
   { key: "students", order: 1, title: "Antal elever", unit: "antal", chart: "line", kpiIds: ["N15807"], source: "Kolada: N15807", localNeeded: false, category: "förutsättningar" },
   { key: "operatingResult", order: 2, title: "Driftresultat", unit: "tkr", chart: "line", source: "Lokal komplettering, exempelvis ekonomisystem", localNeeded: true, category: "förutsättningar" },
-  { key: "netCost", order: 3, title: "Kostnad grundskola åk 1-9", unit: "kr/elev", chart: "line", kpiIds: ["N15006"], source: "Kolada: N15006, källa SCB", localNeeded: "partial", category: "förutsättningar", description: "Bruttokostnad minus interna intäkter plus kostnad för skolskjuts minus försäljning av verksamhet till andra kommuner, dividerat med medelvärde av antal folkbokförda elever i grundskola åk 1-9." },
+  { key: "netCost", order: 3, title: "Kostnad grundskola åk 1-9", unit: "kr/elev", chart: "line", kpiIds: ["N15006"], source: "Kolada: N15006, källa SCB", localNeeded: "partial", dataLevel: "municipality", category: "förutsättningar", description: "Bruttokostnad minus interna intäkter plus kostnad för skolskjuts minus försäljning av verksamhet till andra kommuner, dividerat med medelvärde av antal folkbokförda elever i grundskola åk 1-9." },
   { key: "staffAbsence", order: 4, title: "Frånvaro personal", unit: "%", chart: "line", source: "Lokal komplettering, exempelvis HR-system", localNeeded: true, category: "förutsättningar" },
   { key: "teacherEligibility", order: 5, title: "Lärarlegitimation och behörighet", unit: "%", chart: "line", kpiIds: ["N15814"], source: "Kolada: N15814", localNeeded: false, category: "förutsättningar", description: "Lärare, omräknat till heltidstjänster, med lärarlegitimation och behörighet i grundskola åk 1-9, kommunala skolor." },
   { key: "studentsPerTeacher", order: 6, title: "Antal elever per lärare", unit: "antal", chart: "line", kpiIds: ["N15033"], source: "Kolada: N15033", localNeeded: false, category: "förutsättningar" },
-  { key: "studentAbsence", order: 7, title: "Frånvaro elever", unit: "%", chart: "line", source: "Lokal komplettering, exempelvis elevadministration/lärplattform", localNeeded: true, category: "förutsättningar" },
+  { key: "studentAbsence", order: 7, title: "Frånvaro elever", unit: "%", chart: "line", source: "Lokal frånvarorapport från Edlevo", localNeeded: true, category: "förutsättningar", compareMunicipality: true },
   { key: "wellbeing", order: 8, title: "Trivsel elever", unit: "%", chart: "bar", source: "Lokal enkät eller Skolenkäten där jämförbart värde finns", localNeeded: true, category: "förutsättningar" },
-  { key: "nationalTests3", order: 9, title: "Resultat nationella prov årskurs 3", unit: "%", chart: "line", source: "Kolada: N15454/N15444, N15452/N15443", localNeeded: false, stage: ["F-6", "F-9"], category: "utfall", series: [
-    { key: "matematik", label: "Matematik", kpiIds: ["N15454", "N15444"], color: "#14b8a6" },
-    { key: "svenskaSva", label: "Svenska och SVA", kpiIds: ["N15452", "N15443"], color: "#f97316" },
+  { key: "nationalTests3", order: 9, title: "Resultat nationella prov årskurs 3", unit: "%", chart: "line", source: "Hypergene", localNeeded: true, stage: ["F-6", "F-9"], category: "utfall", description: "Andel elever som uppnått kravnivån i samtliga delprov på nationella proven i svenska och SVA samt matematik i årskurs 3.", series: [
+    { key: "matematik", label: "Matematik", color: "#14b8a6" },
+    { key: "svenskaSva", label: "Svenska och SVA", color: "#f97316" },
   ] },
   { key: "nationalTests6", order: 10, title: "Resultat nationellt prov årskurs 6", unit: "%", chart: "line", source: "Lokal komplettering", localNeeded: true, stage: ["F-6", "F-9"], category: "utfall", description: "Andel elever som uppnått kravnivån på de nationella proven i svenska, engelska och matematik i årskurs 6.", series: [
     { key: "svenska", label: "Svenska", color: "#14b8a6" },
@@ -187,15 +188,15 @@ const KPI_CATALOG = [
 ];
 
 const LOCAL_SUPPLEMENT = {
-  municipality: { socioEconomicIndex: null, operatingResult: [], staffAbsence: [], studentAbsence: [], wellbeing: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
+  municipality: { socioEconomicIndex: null, operatingResult: [], staffAbsence: [], studentAbsence: [], wellbeing: [], nationalTests3: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
   schools: {
-    "Hägneskolan": { socioEconomicIndex: null, operatingResult: [], staffAbsence: [], studentAbsence: [], wellbeing: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
-    "Rörviks skola": { socioEconomicIndex: null, operatingResult: [], staffAbsence: [], studentAbsence: [], wellbeing: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
-    "Stockaryds skola": { socioEconomicIndex: null, operatingResult: [], staffAbsence: [], studentAbsence: [], wellbeing: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
-    "Vallsjöskolan": { socioEconomicIndex: null, operatingResult: [], staffAbsence: [], studentAbsence: [], wellbeing: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
-    "Vrigstad skola": { socioEconomicIndex: null, operatingResult: [], staffAbsence: [], studentAbsence: [], wellbeing: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
-    "Sävsjö kristna skola": { socioEconomicIndex: null, operatingResult: [], staffAbsence: [], studentAbsence: [], wellbeing: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
-    "Hofgårdsskolan": { socioEconomicIndex: null, operatingResult: [], staffAbsence: [], studentAbsence: [], wellbeing: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
+    "Hägneskolan": { socioEconomicIndex: null, operatingResult: [], staffAbsence: [], studentAbsence: [], wellbeing: [], nationalTests3: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
+    "Rörviks skola": { socioEconomicIndex: null, operatingResult: [], staffAbsence: [], studentAbsence: [], wellbeing: [], nationalTests3: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
+    "Stockaryds skola": { socioEconomicIndex: null, operatingResult: [], staffAbsence: [], studentAbsence: [], wellbeing: [], nationalTests3: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
+    "Vallsjöskolan": { socioEconomicIndex: null, operatingResult: [], staffAbsence: [], studentAbsence: [], wellbeing: [], nationalTests3: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
+    "Vrigstad skola": { socioEconomicIndex: null, operatingResult: [], staffAbsence: [], studentAbsence: [], wellbeing: [], nationalTests3: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
+    "Sävsjö kristna skola": { socioEconomicIndex: null, operatingResult: [], staffAbsence: [], studentAbsence: [], wellbeing: [], nationalTests3: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
+    "Hofgårdsskolan": { socioEconomicIndex: null, operatingResult: [], staffAbsence: [], studentAbsence: [], wellbeing: [], nationalTests3: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
   },
 };
 
@@ -275,6 +276,7 @@ async function searchKpiIds(searchTerms) {
 }
 
 async function loadKoladaSeries(metric, entity) {
+  if (entity.type !== "municipality" && metric.dataLevel === "municipality") return [];
   const ids = metric.kpiIds?.length ? metric.kpiIds.map((id) => ({ id })) : await searchKpiIds(metric.koladaSearchTerms);
   for (const kpi of ids) {
     try {
@@ -325,7 +327,26 @@ async function loadSchools() {
   }
 }
 
+function toAbsencePoint(row) {
+  return {
+    year: row.year,
+    value: row.total_franvaro_pct,
+    municipalityValue: row.municipalityValue,
+    municipalityName: row.municipalityName,
+    source: row.source,
+  };
+}
+
+function getStudentAbsenceSeries(entity) {
+  if (entity.type === "municipality") {
+    return studentAbsenceData.municipality.map(toAbsencePoint);
+  }
+  const school = studentAbsenceData.schools.find((item) => item.name === entity.title);
+  return school ? school.values.map(toAbsencePoint) : [];
+}
+
 function mergeLocalSeries(entity, metric, koladaSeries) {
+  if (metric.key === "studentAbsence") return getStudentAbsenceSeries(entity);
   const localBucket = entity.type === "municipality" ? LOCAL_SUPPLEMENT.municipality : LOCAL_SUPPLEMENT.schools[entity.title] || {};
   const localSeries = localBucket?.[metric.key] || [];
   const byYear = new Map();
@@ -364,7 +385,7 @@ function formatSchoolYear(year) {
 function MetricChart({ metric, data, entityTitle }) {
   const chartData = metric.series
     ? data.map((d) => ({ ...d, år: formatSchoolYear(d.year) }))
-    : data.map((d) => ({ år: formatSchoolYear(d.year), [entityTitle]: d.value, source: d.source }));
+    : data.map((d) => ({ år: formatSchoolYear(d.year), [entityTitle]: d.value, Kommun: d.municipalityValue, source: d.source }));
   if (!hasSeriesData(data, metric)) return <div className="empty-chart">Data saknas i Kolada eller lokal komplettering</div>;
   const common = (
     <>
@@ -394,7 +415,12 @@ function MetricChart({ metric, data, entityTitle }) {
         {metric.series ? metric.series.map((series) => (
           <Line key={series.key} type="monotone" dataKey={series.key} name={series.label} stroke={series.color} strokeWidth={2} dot={{ r: 3 }} connectNulls />
         )) : (
-          <Line type="monotone" dataKey={entityTitle} stroke="#14b8a6" strokeWidth={2} dot={{ r: 3 }} connectNulls />
+          <>
+            <Line type="monotone" dataKey={entityTitle} stroke="#14b8a6" strokeWidth={2} dot={{ r: 3 }} connectNulls />
+            {metric.compareMunicipality && data.some((item) => Number.isFinite(Number(item.municipalityValue))) && (
+              <Line type="monotone" dataKey="Kommun" stroke="#f97316" strokeWidth={2} strokeDasharray="5 5" dot={{ r: 3 }} connectNulls />
+            )}
+          </>
         )}
       </LineChart>
     </ResponsiveContainer>
