@@ -1,0 +1,175 @@
+{
+  "metric": "nationalTests3",
+  "unit": "%",
+  "generatedFrom": [
+    "data\\ak3\\np\\2023-2024\\anonymiserad_fil.csv",
+    "data\\ak3\\np\\2024-2025\\20250626\\rensad_anonymiserad_fil.csv"
+  ],
+  "municipality": [
+    {
+      "year": 2024,
+      "schoolYear": "2023-2024",
+      "matematik": 67.4,
+      "svenskaSva": 70.6,
+      "matematikAntal": 138,
+      "svenskaSvaAntal": 136,
+      "source": "Lokal NP-import"
+    },
+    {
+      "year": 2025,
+      "schoolYear": "2024-2025",
+      "matematik": 76.4,
+      "svenskaSva": 72.1,
+      "matematikAntal": 123,
+      "svenskaSvaAntal": 122,
+      "source": "Lokal NP-import"
+    }
+  ],
+  "schools": [
+    {
+      "name": "Hägneskolan",
+      "values": [
+        {
+          "name": "Hägneskolan",
+          "year": 2024,
+          "schoolYear": "2023-2024",
+          "matematik": 78.4,
+          "svenskaSva": 75.0,
+          "matematikAntal": 37,
+          "svenskaSvaAntal": 36,
+          "kommunMatematik": 67.4,
+          "kommunSvenskaSva": 70.6,
+          "source": "Lokal NP-import"
+        },
+        {
+          "name": "Hägneskolan",
+          "year": 2025,
+          "schoolYear": "2024-2025",
+          "matematik": 73.1,
+          "svenskaSva": 56.0,
+          "matematikAntal": 26,
+          "svenskaSvaAntal": 25,
+          "kommunMatematik": 76.4,
+          "kommunSvenskaSva": 72.1,
+          "source": "Lokal NP-import"
+        }
+      ]
+    },
+    {
+      "name": "Rörviks skola",
+      "values": [
+        {
+          "name": "Rörviks skola",
+          "year": 2024,
+          "schoolYear": "2023-2024",
+          "matematik": 31.2,
+          "svenskaSva": 62.5,
+          "matematikAntal": 16,
+          "svenskaSvaAntal": 16,
+          "kommunMatematik": 67.4,
+          "kommunSvenskaSva": 70.6,
+          "source": "Lokal NP-import"
+        },
+        {
+          "name": "Rörviks skola",
+          "year": 2025,
+          "schoolYear": "2024-2025",
+          "matematik": 100.0,
+          "svenskaSva": 91.7,
+          "matematikAntal": 12,
+          "svenskaSvaAntal": 12,
+          "kommunMatematik": 76.4,
+          "kommunSvenskaSva": 72.1,
+          "source": "Lokal NP-import"
+        }
+      ]
+    },
+    {
+      "name": "Stockaryds skola",
+      "values": [
+        {
+          "name": "Stockaryds skola",
+          "year": 2024,
+          "schoolYear": "2023-2024",
+          "matematik": 77.8,
+          "svenskaSva": 72.2,
+          "matematikAntal": 18,
+          "svenskaSvaAntal": 18,
+          "kommunMatematik": 67.4,
+          "kommunSvenskaSva": 70.6,
+          "source": "Lokal NP-import"
+        },
+        {
+          "name": "Stockaryds skola",
+          "year": 2025,
+          "schoolYear": "2024-2025",
+          "matematik": 75.0,
+          "svenskaSva": 68.8,
+          "matematikAntal": 16,
+          "svenskaSvaAntal": 16,
+          "kommunMatematik": 76.4,
+          "kommunSvenskaSva": 72.1,
+          "source": "Lokal NP-import"
+        }
+      ]
+    },
+    {
+      "name": "Vallsjöskolan",
+      "values": [
+        {
+          "name": "Vallsjöskolan",
+          "year": 2024,
+          "schoolYear": "2023-2024",
+          "matematik": 68.2,
+          "svenskaSva": 58.1,
+          "matematikAntal": 44,
+          "svenskaSvaAntal": 43,
+          "kommunMatematik": 67.4,
+          "kommunSvenskaSva": 70.6,
+          "source": "Lokal NP-import"
+        },
+        {
+          "name": "Vallsjöskolan",
+          "year": 2025,
+          "schoolYear": "2024-2025",
+          "matematik": 83.3,
+          "svenskaSva": 81.0,
+          "matematikAntal": 42,
+          "svenskaSvaAntal": 42,
+          "kommunMatematik": 76.4,
+          "kommunSvenskaSva": 72.1,
+          "source": "Lokal NP-import"
+        }
+      ]
+    },
+    {
+      "name": "Vrigstad skola",
+      "values": [
+        {
+          "name": "Vrigstad skola",
+          "year": 2024,
+          "schoolYear": "2023-2024",
+          "matematik": 65.2,
+          "svenskaSva": 91.3,
+          "matematikAntal": 23,
+          "svenskaSvaAntal": 23,
+          "kommunMatematik": 67.4,
+          "kommunSvenskaSva": 70.6,
+          "source": "Lokal NP-import"
+        },
+        {
+          "name": "Vrigstad skola",
+          "year": 2025,
+          "schoolYear": "2024-2025",
+          "matematik": 59.3,
+          "svenskaSva": 66.7,
+          "matematikAntal": 27,
+          "svenskaSvaAntal": 27,
+          "kommunMatematik": 76.4,
+          "kommunSvenskaSva": 72.1,
+          "source": "Lokal NP-import"
+        }
+      ]
+    }
+  ]
+}

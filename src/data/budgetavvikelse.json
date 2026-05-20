@@ -1,0 +1,289 @@
+{
+  "metric": "budgetDeviation",
+  "unit": "tkr",
+  "generatedFrom": "Budgetavvikelse 5 år.xlsx",
+  "municipality": [
+    {
+      "year": 2021,
+      "source": "Lokal ekonomiimport",
+      "fritids": 748.0,
+      "grundskola": -857.0,
+      "anpassadGrundskola": 380.0,
+      "totalt": 271.0
+    },
+    {
+      "year": 2022,
+      "source": "Lokal ekonomiimport",
+      "fritids": 480.0,
+      "grundskola": -540.0,
+      "anpassadGrundskola": 368.0,
+      "totalt": 308.0
+    },
+    {
+      "year": 2023,
+      "source": "Lokal ekonomiimport",
+      "fritids": 440.0,
+      "grundskola": -2543.0,
+      "anpassadGrundskola": -536.0,
+      "totalt": -2639.0
+    },
+    {
+      "year": 2024,
+      "source": "Lokal ekonomiimport",
+      "fritids": 51.0,
+      "grundskola": -958.0,
+      "anpassadGrundskola": -195.0,
+      "totalt": -1102.0
+    },
+    {
+      "year": 2025,
+      "source": "Lokal ekonomiimport",
+      "fritids": 465.0,
+      "grundskola": -6116.0,
+      "anpassadGrundskola": 233.0,
+      "totalt": -5418.0
+    }
+  ],
+  "schools": [
+    {
+      "name": "Hofgårdsskolan",
+      "values": [
+        {
+          "year": 2021,
+          "source": "Lokal ekonomiimport",
+          "grundskola": -117.0,
+          "totalt": -117.0
+        },
+        {
+          "year": 2022,
+          "source": "Lokal ekonomiimport",
+          "grundskola": 586.0,
+          "totalt": 586.0
+        },
+        {
+          "year": 2023,
+          "source": "Lokal ekonomiimport",
+          "grundskola": 991.0,
+          "totalt": 991.0
+        },
+        {
+          "year": 2024,
+          "source": "Lokal ekonomiimport",
+          "grundskola": 812.0,
+          "totalt": 812.0
+        },
+        {
+          "year": 2025,
+          "source": "Lokal ekonomiimport",
+          "grundskola": 250.0,
+          "totalt": 250.0
+        }
+      ]
+    },
+    {
+      "name": "Hägneskolan",
+      "values": [
+        {
+          "year": 2021,
+          "source": "Lokal ekonomiimport",
+          "fritids": 390.0,
+          "grundskola": 689.0,
+          "anpassadGrundskola": 380.0,
+          "totalt": 1459.0
+        },
+        {
+          "year": 2022,
+          "source": "Lokal ekonomiimport",
+          "fritids": 485.0,
+          "grundskola": 7.0,
+          "anpassadGrundskola": 368.0,
+          "totalt": 860.0
+        },
+        {
+          "year": 2023,
+          "source": "Lokal ekonomiimport",
+          "fritids": 0.0,
+          "grundskola": -688.0,
+          "anpassadGrundskola": -536.0,
+          "totalt": -1224.0
+        },
+        {
+          "year": 2024,
+          "source": "Lokal ekonomiimport",
+          "fritids": -424.0,
+          "grundskola": -457.0,
+          "anpassadGrundskola": -195.0,
+          "totalt": -1076.0
+        },
+        {
+          "year": 2025,
+          "source": "Lokal ekonomiimport",
+          "fritids": -268.0,
+          "grundskola": -1342.0,
+          "anpassadGrundskola": 233.0,
+          "totalt": -1377.0
+        }
+      ]
+    },
+    {
+      "name": "Rörviks skola",
+      "values": [
+        {
+          "year": 2021,
+          "source": "Lokal ekonomiimport",
+          "fritids": 89.0,
+          "grundskola": -1199.0,
+          "totalt": -1110.0
+        },
+        {
+          "year": 2022,
+          "source": "Lokal ekonomiimport",
+          "fritids": 282.0,
+          "grundskola": -699.0,
+          "totalt": -417.0
+        },
+        {
+          "year": 2023,
+          "source": "Lokal ekonomiimport",
+          "fritids": 196.0,
+          "grundskola": -818.0,
+          "totalt": -622.0
+        },
+        {
+          "year": 2024,
+          "source": "Lokal ekonomiimport",
+          "fritids": 579.0,
+          "grundskola": -1272.0,
+          "totalt": -693.0
+        },
+        {
+          "year": 2025,
+          "source": "Lokal ekonomiimport",
+          "fritids": 309.0,
+          "grundskola": -2605.0,
+          "totalt": -2296.0
+        }
+      ]
+    },
+    {
+      "name": "Stockaryds skola",
+      "values": [
+        {
+          "year": 2021,
+          "source": "Lokal ekonomiimport",
+          "fritids": -185.0,
+          "grundskola": -262.0,
+          "totalt": -447.0
+        },
+        {
+          "year": 2022,
+          "source": "Lokal ekonomiimport",
+          "fritids": -80.0,
+          "grundskola": -632.0,
+          "totalt": -712.0
+        },
+        {
+          "year": 2023,
+          "source": "Lokal ekonomiimport",
+          "fritids": 96.0,
+          "grundskola": -144.0,
+          "totalt": -48.0
+        },
+        {
+          "year": 2024,
+          "source": "Lokal ekonomiimport",
+          "fritids": -94.0,
+          "grundskola": -189.0,
+          "totalt": -283.0
+        },
+        {
+          "year": 2025,
+          "source": "Lokal ekonomiimport",
+          "fritids": 102.0,
+          "grundskola": -879.0,
+          "totalt": -777.0
+        }
+      ]
+    },
+    {
+      "name": "Vallsjöskolan",
+      "values": [
+        {
+          "year": 2021,
+          "source": "Lokal ekonomiimport",
+          "fritids": 321.0,
+          "grundskola": 257.0,
+          "totalt": 578.0
+        },
+        {
+          "year": 2022,
+          "source": "Lokal ekonomiimport",
+          "fritids": 17.0,
+          "grundskola": -188.0,
+          "totalt": -171.0
+        },
+        {
+          "year": 2023,
+          "source": "Lokal ekonomiimport",
+          "fritids": -79.0,
+          "grundskola": -1417.0,
+          "totalt": -1496.0
+        },
+        {
+          "year": 2024,
+          "source": "Lokal ekonomiimport",
+          "fritids": -423.0,
+          "grundskola": 219.0,
+          "totalt": -204.0
+        },
+        {
+          "year": 2025,
+          "source": "Lokal ekonomiimport",
+          "fritids": -63.0,
+          "grundskola": -850.0,
+          "totalt": -913.0
+        }
+      ]
+    },
+    {
+      "name": "Vrigstad skola",
+      "values": [
+        {
+          "year": 2021,
+          "source": "Lokal ekonomiimport",
+          "fritids": 133.0,
+          "grundskola": -225.0,
+          "totalt": -92.0
+        },
+        {
+          "year": 2022,
+          "source": "Lokal ekonomiimport",
+          "fritids": -224.0,
+          "grundskola": 386.0,
+          "totalt": 162.0
+        },
+        {
+          "year": 2023,
+          "source": "Lokal ekonomiimport",
+          "fritids": 227.0,
+          "grundskola": -467.0,
+          "totalt": -240.0
+        },
+        {
+          "year": 2024,
+          "source": "Lokal ekonomiimport",
+          "fritids": 413.0,
+          "grundskola": -71.0,
+          "totalt": 342.0
+        },
+        {
+          "year": 2025,
+          "source": "Lokal ekonomiimport",
+          "fritids": 385.0,
+          "grundskola": -690.0,
+          "totalt": -305.0
+        }
+      ]
+    }
+  ]
+}
