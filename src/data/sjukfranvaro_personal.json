@@ -1,0 +1,451 @@
+{
+  "metric": "staffAbsence",
+  "unit": "%",
+  "generatedFrom": [
+    "2021 sjukfrånvaro BU-.xlsx",
+    "2022 sjukfrånvaro BU-.xlsx",
+    "2023 sjukfrånvaro BU-.xlsx",
+    "2024 sjukfrånvaro BU-.xlsx",
+    "2025 sjukfrånvaro BU-.xlsx"
+  ],
+  "municipality": [
+    {
+      "year": 2021,
+      "value": 6.1,
+      "sjukfranvaro_h": 55000.7,
+      "ordinarie_arbetstid_h": 901171.2,
+      "langtidssjukfranvaro_h": 27034.1,
+      "langtidssjukfranvaro_pct": 49.2,
+      "source": "Lokal HR-rapport"
+    },
+    {
+      "year": 2022,
+      "value": 5.7,
+      "sjukfranvaro_h": 49695.7,
+      "ordinarie_arbetstid_h": 872666.9,
+      "langtidssjukfranvaro_h": 22703.7,
+      "langtidssjukfranvaro_pct": 45.7,
+      "source": "Lokal HR-rapport"
+    },
+    {
+      "year": 2023,
+      "value": 5.1,
+      "sjukfranvaro_h": 45360.9,
+      "ordinarie_arbetstid_h": 893357.6,
+      "langtidssjukfranvaro_h": 23584.9,
+      "langtidssjukfranvaro_pct": 52.0,
+      "source": "Lokal HR-rapport"
+    },
+    {
+      "year": 2024,
+      "value": 4.4,
+      "sjukfranvaro_h": 39815.3,
+      "ordinarie_arbetstid_h": 895639.6,
+      "langtidssjukfranvaro_h": 19063.3,
+      "langtidssjukfranvaro_pct": 47.9,
+      "source": "Lokal HR-rapport"
+    },
+    {
+      "year": 2025,
+      "value": 4.7,
+      "sjukfranvaro_h": 36196.6,
+      "ordinarie_arbetstid_h": 776635.8,
+      "langtidssjukfranvaro_h": 17661.4,
+      "langtidssjukfranvaro_pct": 48.8,
+      "source": "Lokal HR-rapport"
+    }
+  ],
+  "schools": [
+    {
+      "name": "Hofgårdsskolan",
+      "values": [
+        {
+          "year": 2021,
+          "value": 3.3,
+          "sjukfranvaro_h": 2887.9,
+          "ordinarie_arbetstid_h": 86596.6,
+          "langtidssjukfranvaro_h": 1018.0,
+          "langtidssjukfranvaro_pct": 35.2,
+          "source": "Lokal HR-rapport",
+          "name": "Hofgårdsskolan",
+          "municipalityValue": 6.1,
+          "municipalityName": "Sävsjö kommun"
+        },
+        {
+          "year": 2022,
+          "value": 4.6,
+          "sjukfranvaro_h": 3805.7,
+          "ordinarie_arbetstid_h": 82655.0,
+          "langtidssjukfranvaro_h": 1614.6,
+          "langtidssjukfranvaro_pct": 42.4,
+          "source": "Lokal HR-rapport",
+          "name": "Hofgårdsskolan",
+          "municipalityValue": 5.7,
+          "municipalityName": "Sävsjö kommun"
+        },
+        {
+          "year": 2023,
+          "value": 4.9,
+          "sjukfranvaro_h": 4347.2,
+          "ordinarie_arbetstid_h": 88580.4,
+          "langtidssjukfranvaro_h": 2431.8,
+          "langtidssjukfranvaro_pct": 55.9,
+          "source": "Lokal HR-rapport",
+          "name": "Hofgårdsskolan",
+          "municipalityValue": 5.1,
+          "municipalityName": "Sävsjö kommun"
+        },
+        {
+          "year": 2024,
+          "value": 5.5,
+          "sjukfranvaro_h": 5116.1,
+          "ordinarie_arbetstid_h": 93047.5,
+          "langtidssjukfranvaro_h": 3117.1,
+          "langtidssjukfranvaro_pct": 60.9,
+          "source": "Lokal HR-rapport",
+          "name": "Hofgårdsskolan",
+          "municipalityValue": 4.4,
+          "municipalityName": "Sävsjö kommun"
+        },
+        {
+          "year": 2025,
+          "value": 3.8,
+          "sjukfranvaro_h": 3439.1,
+          "ordinarie_arbetstid_h": 91496.2,
+          "langtidssjukfranvaro_h": 1781.4,
+          "langtidssjukfranvaro_pct": 51.8,
+          "source": "Lokal HR-rapport",
+          "name": "Hofgårdsskolan",
+          "municipalityValue": 4.7,
+          "municipalityName": "Sävsjö kommun"
+        }
+      ]
+    },
+    {
+      "name": "Hägneskolan",
+      "values": [
+        {
+          "year": 2021,
+          "value": 4.6,
+          "sjukfranvaro_h": 3834.7,
+          "ordinarie_arbetstid_h": 83610.4,
+          "langtidssjukfranvaro_h": 1172.7,
+          "langtidssjukfranvaro_pct": 30.6,
+          "source": "Lokal HR-rapport",
+          "name": "Hägneskolan",
+          "municipalityValue": 6.1,
+          "municipalityName": "Sävsjö kommun"
+        },
+        {
+          "year": 2022,
+          "value": 6.1,
+          "sjukfranvaro_h": 5866.3,
+          "ordinarie_arbetstid_h": 95440.6,
+          "langtidssjukfranvaro_h": 3193.3,
+          "langtidssjukfranvaro_pct": 54.4,
+          "source": "Lokal HR-rapport",
+          "name": "Hägneskolan",
+          "municipalityValue": 5.7,
+          "municipalityName": "Sävsjö kommun"
+        },
+        {
+          "year": 2023,
+          "value": 4.9,
+          "sjukfranvaro_h": 5120.9,
+          "ordinarie_arbetstid_h": 105518.3,
+          "langtidssjukfranvaro_h": 2771.4,
+          "langtidssjukfranvaro_pct": 54.1,
+          "source": "Lokal HR-rapport",
+          "name": "Hägneskolan",
+          "municipalityValue": 5.1,
+          "municipalityName": "Sävsjö kommun"
+        },
+        {
+          "year": 2024,
+          "value": 5.0,
+          "sjukfranvaro_h": 5190.0,
+          "ordinarie_arbetstid_h": 103179.0,
+          "langtidssjukfranvaro_h": 3188.9,
+          "langtidssjukfranvaro_pct": 61.4,
+          "source": "Lokal HR-rapport",
+          "name": "Hägneskolan",
+          "municipalityValue": 4.4,
+          "municipalityName": "Sävsjö kommun"
+        },
+        {
+          "year": 2025,
+          "value": 3.5,
+          "sjukfranvaro_h": 3724.9,
+          "ordinarie_arbetstid_h": 106794.9,
+          "langtidssjukfranvaro_h": 1973.4,
+          "langtidssjukfranvaro_pct": 53.0,
+          "source": "Lokal HR-rapport",
+          "name": "Hägneskolan",
+          "municipalityValue": 4.7,
+          "municipalityName": "Sävsjö kommun"
+        }
+      ]
+    },
+    {
+      "name": "Rörviks skola",
+      "values": [
+        {
+          "year": 2021,
+          "value": 2.3,
+          "sjukfranvaro_h": 1442.3,
+          "ordinarie_arbetstid_h": 63999.0,
+          "langtidssjukfranvaro_h": 96.9,
+          "langtidssjukfranvaro_pct": 6.7,
+          "source": "Lokal HR-rapport",
+          "name": "Rörviks skola",
+          "municipalityValue": 6.1,
+          "municipalityName": "Sävsjö kommun"
+        },
+        {
+          "year": 2022,
+          "value": 5.8,
+          "sjukfranvaro_h": 3677.8,
+          "ordinarie_arbetstid_h": 63648.7,
+          "langtidssjukfranvaro_h": 1860.1,
+          "langtidssjukfranvaro_pct": 50.6,
+          "source": "Lokal HR-rapport",
+          "name": "Rörviks skola",
+          "municipalityValue": 5.7,
+          "municipalityName": "Sävsjö kommun"
+        },
+        {
+          "year": 2023,
+          "value": 6.7,
+          "sjukfranvaro_h": 4781.7,
+          "ordinarie_arbetstid_h": 71706.1,
+          "langtidssjukfranvaro_h": 2862.7,
+          "langtidssjukfranvaro_pct": 59.9,
+          "source": "Lokal HR-rapport",
+          "name": "Rörviks skola",
+          "municipalityValue": 5.1,
+          "municipalityName": "Sävsjö kommun"
+        },
+        {
+          "year": 2024,
+          "value": 8.3,
+          "sjukfranvaro_h": 5953.6,
+          "ordinarie_arbetstid_h": 71851.3,
+          "langtidssjukfranvaro_h": 4218.2,
+          "langtidssjukfranvaro_pct": 70.9,
+          "source": "Lokal HR-rapport",
+          "name": "Rörviks skola",
+          "municipalityValue": 4.4,
+          "municipalityName": "Sävsjö kommun"
+        },
+        {
+          "year": 2025,
+          "value": 5.6,
+          "sjukfranvaro_h": 3717.6,
+          "ordinarie_arbetstid_h": 65804.1,
+          "langtidssjukfranvaro_h": 1997.6,
+          "langtidssjukfranvaro_pct": 53.7,
+          "source": "Lokal HR-rapport",
+          "name": "Rörviks skola",
+          "municipalityValue": 4.7,
+          "municipalityName": "Sävsjö kommun"
+        }
+      ]
+    },
+    {
+      "name": "Stockaryds skola",
+      "values": [
+        {
+          "year": 2021,
+          "value": 7.6,
+          "sjukfranvaro_h": 3365.9,
+          "ordinarie_arbetstid_h": 44303.9,
+          "langtidssjukfranvaro_h": 2084.3,
+          "langtidssjukfranvaro_pct": 61.9,
+          "source": "Lokal HR-rapport",
+          "name": "Stockaryds skola",
+          "municipalityValue": 6.1,
+          "municipalityName": "Sävsjö kommun"
+        },
+        {
+          "year": 2022,
+          "value": 7.5,
+          "sjukfranvaro_h": 2895.3,
+          "ordinarie_arbetstid_h": 38561.8,
+          "langtidssjukfranvaro_h": 1516.7,
+          "langtidssjukfranvaro_pct": 52.4,
+          "source": "Lokal HR-rapport",
+          "name": "Stockaryds skola",
+          "municipalityValue": 5.7,
+          "municipalityName": "Sävsjö kommun"
+        },
+        {
+          "year": 2023,
+          "value": 5.2,
+          "sjukfranvaro_h": 2073.4,
+          "ordinarie_arbetstid_h": 39517.5,
+          "langtidssjukfranvaro_h": 1050.5,
+          "langtidssjukfranvaro_pct": 50.7,
+          "source": "Lokal HR-rapport",
+          "name": "Stockaryds skola",
+          "municipalityValue": 5.1,
+          "municipalityName": "Sävsjö kommun"
+        },
+        {
+          "year": 2024,
+          "value": 4.5,
+          "sjukfranvaro_h": 1705.0,
+          "ordinarie_arbetstid_h": 37835.4,
+          "langtidssjukfranvaro_h": 595.0,
+          "langtidssjukfranvaro_pct": 34.9,
+          "source": "Lokal HR-rapport",
+          "name": "Stockaryds skola",
+          "municipalityValue": 4.4,
+          "municipalityName": "Sävsjö kommun"
+        },
+        {
+          "year": 2025,
+          "value": 5.3,
+          "sjukfranvaro_h": 1929.4,
+          "ordinarie_arbetstid_h": 36333.2,
+          "langtidssjukfranvaro_h": 1116.9,
+          "langtidssjukfranvaro_pct": 57.9,
+          "source": "Lokal HR-rapport",
+          "name": "Stockaryds skola",
+          "municipalityValue": 4.7,
+          "municipalityName": "Sävsjö kommun"
+        }
+      ]
+    },
+    {
+      "name": "Vallsjöskolan",
+      "values": [
+        {
+          "year": 2021,
+          "value": 10.3,
+          "sjukfranvaro_h": 10812.6,
+          "ordinarie_arbetstid_h": 104570.5,
+          "langtidssjukfranvaro_h": 7302.1,
+          "langtidssjukfranvaro_pct": 67.5,
+          "source": "Lokal HR-rapport",
+          "name": "Vallsjöskolan",
+          "municipalityValue": 6.1,
+          "municipalityName": "Sävsjö kommun"
+        },
+        {
+          "year": 2022,
+          "value": 6.6,
+          "sjukfranvaro_h": 6804.1,
+          "ordinarie_arbetstid_h": 103783.8,
+          "langtidssjukfranvaro_h": 3801.2,
+          "langtidssjukfranvaro_pct": 55.9,
+          "source": "Lokal HR-rapport",
+          "name": "Vallsjöskolan",
+          "municipalityValue": 5.7,
+          "municipalityName": "Sävsjö kommun"
+        },
+        {
+          "year": 2023,
+          "value": 4.0,
+          "sjukfranvaro_h": 4075.3,
+          "ordinarie_arbetstid_h": 101129.4,
+          "langtidssjukfranvaro_h": 1690.6,
+          "langtidssjukfranvaro_pct": 41.5,
+          "source": "Lokal HR-rapport",
+          "name": "Vallsjöskolan",
+          "municipalityValue": 5.1,
+          "municipalityName": "Sävsjö kommun"
+        },
+        {
+          "year": 2024,
+          "value": 2.6,
+          "sjukfranvaro_h": 2449.2,
+          "ordinarie_arbetstid_h": 95282.5,
+          "langtidssjukfranvaro_h": 1024.0,
+          "langtidssjukfranvaro_pct": 41.8,
+          "source": "Lokal HR-rapport",
+          "name": "Vallsjöskolan",
+          "municipalityValue": 4.4,
+          "municipalityName": "Sävsjö kommun"
+        },
+        {
+          "year": 2025,
+          "value": 4.6,
+          "sjukfranvaro_h": 4454.0,
+          "ordinarie_arbetstid_h": 96892.5,
+          "langtidssjukfranvaro_h": 2448.7,
+          "langtidssjukfranvaro_pct": 55.0,
+          "source": "Lokal HR-rapport",
+          "name": "Vallsjöskolan",
+          "municipalityValue": 4.7,
+          "municipalityName": "Sävsjö kommun"
+        }
+      ]
+    },
+    {
+      "name": "Vrigstad skola",
+      "values": [
+        {
+          "year": 2021,
+          "value": 5.7,
+          "sjukfranvaro_h": 3215.8,
+          "ordinarie_arbetstid_h": 56736.7,
+          "langtidssjukfranvaro_h": 1663.1,
+          "langtidssjukfranvaro_pct": 51.7,
+          "source": "Lokal HR-rapport",
+          "name": "Vrigstad skola",
+          "municipalityValue": 6.1,
+          "municipalityName": "Sävsjö kommun"
+        },
+        {
+          "year": 2022,
+          "value": 4.1,
+          "sjukfranvaro_h": 2227.6,
+          "ordinarie_arbetstid_h": 54387.3,
+          "langtidssjukfranvaro_h": 539.3,
+          "langtidssjukfranvaro_pct": 24.2,
+          "source": "Lokal HR-rapport",
+          "name": "Vrigstad skola",
+          "municipalityValue": 5.7,
+          "municipalityName": "Sävsjö kommun"
+        },
+        {
+          "year": 2023,
+          "value": 3.7,
+          "sjukfranvaro_h": 2151.3,
+          "ordinarie_arbetstid_h": 57863.1,
+          "langtidssjukfranvaro_h": 664.2,
+          "langtidssjukfranvaro_pct": 30.9,
+          "source": "Lokal HR-rapport",
+          "name": "Vrigstad skola",
+          "municipalityValue": 5.1,
+          "municipalityName": "Sävsjö kommun"
+        },
+        {
+          "year": 2024,
+          "value": 1.8,
+          "sjukfranvaro_h": 1035.8,
+          "ordinarie_arbetstid_h": 56574.6,
+          "langtidssjukfranvaro_h": 156.6,
+          "langtidssjukfranvaro_pct": 15.1,
+          "source": "Lokal HR-rapport",
+          "name": "Vrigstad skola",
+          "municipalityValue": 4.4,
+          "municipalityName": "Sävsjö kommun"
+        },
+        {
+          "year": 2025,
+          "value": 4.5,
+          "sjukfranvaro_h": 2609.4,
+          "ordinarie_arbetstid_h": 57813.4,
+          "langtidssjukfranvaro_h": 1390.8,
+          "langtidssjukfranvaro_pct": 53.3,
+          "source": "Lokal HR-rapport",
+          "name": "Vrigstad skola",
+          "municipalityValue": 4.7,
+          "municipalityName": "Sävsjö kommun"
+        }
+      ]
+    }
+  ],
+  "warnings": []
+}

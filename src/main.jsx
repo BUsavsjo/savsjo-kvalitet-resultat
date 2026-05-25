@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import { Download, FileText, RefreshCw, School, Building2, Database, AlertTriangle } from "lucide-react";
 import "./styles.css";
+import staffAbsenceData from "./data/sjukfranvaro_personal.json";
 import studentAbsenceData from "./data/franvaro_elever.json";
 import nationalTests3Data from "./data/ak3_np.json";
 import budgetDeviationData from "./data/budgetavvikelse.json";
@@ -169,7 +170,7 @@ const KPI_CATALOG = [
     { key: "totalt", label: "Totalt", color: "#0f172a" },
   ] },
   { key: "netCost", order: 5, title: "Kostnad grundskola åk 1-9", unit: "kr/elev", chart: "line", kpiIds: ["N15006"], source: "Kolada: N15006, källa SCB", localNeeded: "partial", dataLevel: "municipality", category: "förutsättningar", description: "Bruttokostnad minus interna intäkter plus kostnad för skolskjuts minus försäljning av verksamhet till andra kommuner, dividerat med medelvärde av antal folkbokförda elever i grundskola åk 1-9." },
-  { key: "staffAbsence", order: 6, title: "Frånvaro personal", unit: "%", chart: "line", source: "Lokal komplettering, exempelvis HR-system", localNeeded: true, category: "förutsättningar" },
+  { key: "staffAbsence", order: 6, title: "Frånvaro personal", unit: "%", chart: "line", source: "Lokal HR-rapport: sjukfrånvaro BU", localNeeded: true, category: "förutsättningar", period: "calendarYear", compareMunicipality: true, description: "Sjukfrånvaro i procent av ordinarie arbetstid. Totalen bygger på BU-rapportens detaljrader och skolenheter aggregeras från respektive enhetsrader." },
   { key: "teacherEligibility", order: 7, title: "Lärarlegitimation och behörighet", unit: "%", chart: "line", kpiIds: ["N15814"], source: "Kolada: N15814", localNeeded: false, category: "förutsättningar", description: "Lärare, omräknat till heltidstjänster, med lärarlegitimation och behörighet i grundskola åk 1-9, kommunala skolor." },
   { key: "teacherPedagogicalDegree", order: 8, title: "Lärare med pedagogisk högskoleexamen", unit: "%", chart: "line", kpiIds: ["N15030"], source: "Kolada: N15030", localNeeded: false, category: "förutsättningar" },
   { key: "studentsPerTeacher", order: 9, title: "Antal elever per lärare", unit: "antal", chart: "line", kpiIds: ["N15033"], source: "Kolada: N15033", localNeeded: false, category: "förutsättningar" },
@@ -427,6 +428,24 @@ function getStudentAbsenceSeries(entity) {
   return school ? school.values.map(toAbsencePoint) : [];
 }
 
+function toStaffAbsencePoint(row) {
+  return {
+    year: row.year,
+    value: row.value,
+    municipalityValue: row.municipalityValue,
+    municipalityName: row.municipalityName,
+    source: row.source,
+  };
+}
+
+function getStaffAbsenceSeries(entity) {
+  if (entity.type === "municipality") {
+    return staffAbsenceData.municipality.map(toStaffAbsencePoint);
+  }
+  const school = staffAbsenceData.schools.find((item) => item.name === entity.title);
+  return school ? school.values.map(toStaffAbsencePoint) : [];
+}
+
 function toNationalTests3Point(row) {
   return {
     year: row.year,
@@ -453,6 +472,7 @@ function getBudgetDeviationSeries(entity) {
 }
 
 function mergeLocalSeries(entity, metric, koladaSeries) {
+  if (metric.key === "staffAbsence") return getStaffAbsenceSeries(entity);
   if (metric.key === "studentAbsence") return getStudentAbsenceSeries(entity);
   if (metric.key === "nationalTests3") return getNationalTests3Series(entity);
   if (metric.key === "budgetDeviation") return getBudgetDeviationSeries(entity);
@@ -524,11 +544,15 @@ function formatSchoolYear(year) {
   return Number.isFinite(end) ? `${end - 1}/${end}` : year;
 }
 
+function formatMetricYear(year, metric) {
+  return metric.period === "calendarYear" ? String(year) : formatSchoolYear(year);
+}
+
 function MetricChart({ metric, data, entityTitle }) {
   const chartData = metric.series
-    ? data.map((d) => ({ ...d, år: formatSchoolYear(d.year) }))
+    ? data.map((d) => ({ ...d, år: formatMetricYear(d.year, metric) }))
     : data.map((d) => ({
-      år: formatSchoolYear(d.year),
+      år: formatMetricYear(d.year, metric),
       [entityTitle]: d.value,
       Kommun: d.municipalityValue,
       Riket: d.riketValue,
