@@ -87,6 +87,27 @@ h2 { margin: 0; font-size: clamp(2rem, 6vw, 3.5rem); line-height: 1; }
 .metric-value { font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-size: 1.65rem; font-weight: 950; margin: .25rem 0; }
 .metric-value small { color: #64748b; font-size: .8rem; margin-left: .25rem; font-weight: 800; }
 .empty-chart { height: 180px; display: grid; place-items: center; border: 1px dashed #94a3b8; border-radius: 0; color: #64748b; font-size: .9rem; text-align: center; padding: 1rem; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+.salsa-card { grid-column: 1 / -1; }
+.salsa-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem .9rem;
+  align-items: center;
+  margin: .6rem 0 1rem;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: .86rem;
+  color: #0f172a;
+}
+.salsa-summary strong { font-size: 1rem; }
+.salsa-summary span { border-left: 3px solid #14b8a6; padding-left: .6rem; }
+.salsa-charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.salsa-charts p {
+  margin: 0 0 .25rem;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: .78rem;
+  font-weight: 900;
+  color: #0f172a;
+}
 .section-divider { display: flex; align-items: center; gap: .75rem; margin: 1.5rem 0; }
 .section-divider div { height: 4px; flex: 1; background: #14b8a6; border-radius: 999px; }
 .section-divider p { margin: 0; color: #64748b; font-size: .72rem; font-weight: 950; text-transform: uppercase; letter-spacing: .24em; }
@@ -94,7 +115,7 @@ h2 { margin: 0; font-size: clamp(2rem, 6vw, 3.5rem); line-height: 1; }
 .report-footer p { margin: 0 0 .25rem; color: #0f172a; font-weight: 900; }
 
 @media (max-width: 900px) {
-  .metric-grid { grid-template-columns: 1fr; }
+  .metric-grid, .salsa-charts { grid-template-columns: 1fr; }
 }
 @media (max-width: 760px) {
   .sources-panel, .metric-grid { grid-template-columns: 1fr; }

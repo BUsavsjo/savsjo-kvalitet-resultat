@@ -43,7 +43,6 @@ const MUNICIPALITY_NAME = "Sävsjö kommun";
 const RIKET_ID = "0000";
 const SIMILAR_MUNICIPALITY_IDS = ["0604", "0617", "0682", "0683", "0685", "0686", "0687"];
 const EXTERNAL_COMPARISON_METRICS = new Set([
-  "netCost",
   "teacherEligibility",
   "studentsPerTeacher",
   "svenska6",
@@ -53,9 +52,8 @@ const EXTERNAL_COMPARISON_METRICS = new Set([
   "gymEligibility",
   "meritValue",
   "mathGrade9",
-  "salsaEligibility",
-  "salsaMerit",
 ]);
+const SALSA_ANALYSIS_KEYS = new Set(["salsaEligibility", "salsaMerit"]);
 const CURRENT_YEAR = new Date().getFullYear();
 const YEARS = Array.from({ length: 5 }, (_, index) => CURRENT_YEAR - 4 + index);
 const koladaCache = {};
@@ -146,9 +144,9 @@ function getAllKPIIds(stage) {
 const PREDEFINED_SKOLENHETER = [
   { id: "V15E068400107", municipality: "0684", title: "Hägneskolan", type: "grundskola", grades: "F-6", stage: "F-6", source: "Fördefinierad Kolada OU" },
   { id: "V15E068400501", municipality: "0684", title: "Rörviks skola", type: "grundskola", grades: "F-9", stage: "F-9", source: "Fördefinierad Kolada OU" },
-  { id: "V15E068400701", municipality: "0684", title: "Vallsjöskolan", type: "grundskola", grades: "7-9", stage: "7-9", source: "Fördefinierad Kolada OU" },
+  { id: "V15E068400701", municipality: "0684", title: "Vallsjöskolan", type: "grundskola", grades: "F-6", stage: "F-6", source: "Fördefinierad Kolada OU" },
   { id: "V15E068401101", municipality: "0684", title: "Vrigstad skola", type: "grundskola", grades: "F-6", stage: "F-6", source: "Fördefinierad Kolada OU" },
-  { id: "V15E068401401", municipality: "0684", title: "Sävsjö kristna skola", type: "grundskola", grades: "F-9", stage: "F-9", source: "Fördefinierad Kolada OU" },
+  { id: "V15E068401401", municipality: "0684", title: "Sävsjö kristna skola", type: "grundskola", grades: "F-6", stage: "F-6", source: "Fördefinierad Kolada OU" },
   { id: "V15E068401501", municipality: "0684", title: "Hofgårdsskolan", type: "grundskola", grades: "7-9", stage: "7-9", source: "Fördefinierad Kolada OU" },
   { id: "V15E068401601", municipality: "0684", title: "Stockaryds skola", type: "grundskola", grades: "F-6", stage: "F-6", source: "Fördefinierad Kolada OU" },
 ];
@@ -161,15 +159,13 @@ const SCHOOL_FALLBACK = getPredefinedSkolenheter(MUNICIPALITY_ID);
 
 const KPI_CATALOG = [
   { key: "students", order: 1, title: "Antal elever", unit: "antal", chart: "line", kpiIds: ["N15835"], schoolKpiIds: ["N15807", "N11805"], source: "Kolada: N15835, skolenhet N15807 + N11805", localNeeded: false, category: "förutsättningar" },
-  { key: "adaptedStudents", order: 2, title: "Elever i anpassad grundskola", unit: "antal", chart: "line", kpiIds: ["N18803"], source: "Kolada: N18803", localNeeded: "partial", category: "förutsättningar" },
-  { key: "operatingResult", order: 3, title: "Driftresultat", unit: "tkr", chart: "line", source: "Lokal komplettering, exempelvis ekonomisystem", localNeeded: true, category: "förutsättningar" },
+  { key: "adaptedStudents", order: 2, title: "Elever i anpassad grundskola", unit: "antal", chart: "line", kpiIds: ["N18803"], source: "Kolada: N18803", localNeeded: "partial", schoolTitles: ["Hägneskolan"], category: "förutsättningar" },
   { key: "budgetDeviation", order: 4, title: "Budgetavvikelse", unit: "tkr", chart: "line", source: "Lokal ekonomiimport: Budgetavvikelse 5 år.xlsx", localNeeded: true, category: "förutsättningar", series: [
     { key: "grundskola", label: "Grundskola", color: "#14b8a6" },
     { key: "fritids", label: "Fritidshem", color: "#f97316" },
     { key: "anpassadGrundskola", label: "Anpassad grundskola", color: "#8b5cf6" },
     { key: "totalt", label: "Totalt", color: "#0f172a" },
   ] },
-  { key: "netCost", order: 5, title: "Kostnad grundskola åk 1-9", unit: "kr/elev", chart: "line", kpiIds: ["N15006"], source: "Kolada: N15006, källa SCB", localNeeded: "partial", dataLevel: "municipality", category: "förutsättningar", description: "Bruttokostnad minus interna intäkter plus kostnad för skolskjuts minus försäljning av verksamhet till andra kommuner, dividerat med medelvärde av antal folkbokförda elever i grundskola åk 1-9." },
   { key: "staffAbsence", order: 6, title: "Frånvaro personal", unit: "%", chart: "line", source: "Lokal HR-rapport: sjukfrånvaro BU", localNeeded: true, category: "förutsättningar", period: "calendarYear", compareMunicipality: true, description: "Sjukfrånvaro i procent av ordinarie arbetstid. Totalen bygger på BU-rapportens detaljrader och skolenheter aggregeras från respektive enhetsrader." },
   { key: "teacherEligibility", order: 7, title: "Lärarlegitimation och behörighet", unit: "%", chart: "line", kpiIds: ["N15814"], source: "Kolada: N15814", localNeeded: false, category: "förutsättningar", description: "Lärare, omräknat till heltidstjänster, med lärarlegitimation och behörighet i grundskola åk 1-9, kommunala skolor." },
   { key: "teacherPedagogicalDegree", order: 8, title: "Lärare med pedagogisk högskoleexamen", unit: "%", chart: "line", kpiIds: ["N15030"], source: "Kolada: N15030", localNeeded: false, category: "förutsättningar" },
@@ -213,20 +209,20 @@ const KPI_CATALOG = [
   { key: "gymEligibility", order: 18, title: "Gymnasiebehörighet", unit: "%", chart: "line", kpiIds: ["N15424"], source: "Kolada: N15424", localNeeded: false, stage: ["7-9", "F-9"], category: "utfall" },
   { key: "meritValue", order: 19, title: "Genomsnittligt meritvärde", unit: "poäng", chart: "line", kpiIds: ["N15504"], source: "Kolada: N15504", localNeeded: false, stage: ["7-9", "F-9"], category: "utfall" },
   { key: "mathGrade9", order: 20, title: "Åk 9 betygspoäng matematik", unit: "poäng", chart: "line", kpiIds: ["N15503"], source: "Kolada: N15503", localNeeded: false, stage: ["7-9", "F-9"], category: "utfall" },
-  { key: "salsaEligibility", order: 21, title: "SALSA avvikelse resultat", unit: "procentenheter", chart: "line", kpiIds: ["U15414"], source: "Kolada: U15414", localNeeded: false, stage: ["7-9", "F-9"], category: "utfall" },
-  { key: "salsaMerit", order: 22, title: "SALSA avvikelse meritvärde", unit: "poäng", chart: "line", kpiIds: ["U15416"], source: "Kolada: U15416", localNeeded: false, stage: ["7-9", "F-9"], category: "utfall" },
+  { key: "salsaEligibility", order: 21, title: "SALSA avvikelse resultat", unit: "procentenheter", chart: "line", kpiIds: ["U15414"], source: "Kolada: U15414", localNeeded: false, stage: ["7-9", "F-9"], entityTypes: ["school"], category: "utfall" },
+  { key: "salsaMerit", order: 22, title: "SALSA avvikelse meritvärde", unit: "poäng", chart: "line", kpiIds: ["U15416"], source: "Kolada: U15416", localNeeded: false, stage: ["7-9", "F-9"], entityTypes: ["school"], category: "utfall" },
 ];
 
 const LOCAL_SUPPLEMENT = {
-  municipality: { socioEconomicIndex: null, operatingResult: [], adaptedStudents: [], staffAbsence: [], teacherPedagogicalDegree: [], studentAbsence: [], parentHigherEducation: [], wellbeing: [], nationalTests3: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
+  municipality: { socioEconomicIndex: null, adaptedStudents: [], staffAbsence: [], teacherPedagogicalDegree: [], studentAbsence: [], parentHigherEducation: [], wellbeing: [], nationalTests3: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
   schools: {
-    "Hägneskolan": { socioEconomicIndex: null, operatingResult: [], adaptedStudents: [], staffAbsence: [], teacherPedagogicalDegree: [], studentAbsence: [], parentHigherEducation: [], wellbeing: [], nationalTests3: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
-    "Rörviks skola": { socioEconomicIndex: null, operatingResult: [], adaptedStudents: [], staffAbsence: [], teacherPedagogicalDegree: [], studentAbsence: [], parentHigherEducation: [], wellbeing: [], nationalTests3: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
-    "Stockaryds skola": { socioEconomicIndex: null, operatingResult: [], adaptedStudents: [], staffAbsence: [], teacherPedagogicalDegree: [], studentAbsence: [], parentHigherEducation: [], wellbeing: [], nationalTests3: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
-    "Vallsjöskolan": { socioEconomicIndex: null, operatingResult: [], adaptedStudents: [], staffAbsence: [], teacherPedagogicalDegree: [], studentAbsence: [], parentHigherEducation: [], wellbeing: [], nationalTests3: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
-    "Vrigstad skola": { socioEconomicIndex: null, operatingResult: [], adaptedStudents: [], staffAbsence: [], teacherPedagogicalDegree: [], studentAbsence: [], parentHigherEducation: [], wellbeing: [], nationalTests3: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
-    "Sävsjö kristna skola": { socioEconomicIndex: null, operatingResult: [], adaptedStudents: [], staffAbsence: [], teacherPedagogicalDegree: [], studentAbsence: [], parentHigherEducation: [], wellbeing: [], nationalTests3: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
-    "Hofgårdsskolan": { socioEconomicIndex: null, operatingResult: [], adaptedStudents: [], staffAbsence: [], teacherPedagogicalDegree: [], studentAbsence: [], parentHigherEducation: [], wellbeing: [], nationalTests3: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
+    "Hägneskolan": { socioEconomicIndex: null, adaptedStudents: [], staffAbsence: [], teacherPedagogicalDegree: [], studentAbsence: [], parentHigherEducation: [], wellbeing: [], nationalTests3: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
+    "Rörviks skola": { socioEconomicIndex: null, adaptedStudents: [], staffAbsence: [], teacherPedagogicalDegree: [], studentAbsence: [], parentHigherEducation: [], wellbeing: [], nationalTests3: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
+    "Stockaryds skola": { socioEconomicIndex: null, adaptedStudents: [], staffAbsence: [], teacherPedagogicalDegree: [], studentAbsence: [], parentHigherEducation: [], wellbeing: [], nationalTests3: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
+    "Vallsjöskolan": { socioEconomicIndex: null, adaptedStudents: [], staffAbsence: [], teacherPedagogicalDegree: [], studentAbsence: [], parentHigherEducation: [], wellbeing: [], nationalTests3: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
+    "Vrigstad skola": { socioEconomicIndex: null, adaptedStudents: [], staffAbsence: [], teacherPedagogicalDegree: [], studentAbsence: [], parentHigherEducation: [], wellbeing: [], nationalTests3: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
+    "Sävsjö kristna skola": { socioEconomicIndex: null, adaptedStudents: [], staffAbsence: [], teacherPedagogicalDegree: [], studentAbsence: [], parentHigherEducation: [], wellbeing: [], nationalTests3: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
+    "Hofgårdsskolan": { socioEconomicIndex: null, adaptedStudents: [], staffAbsence: [], teacherPedagogicalDegree: [], studentAbsence: [], parentHigherEducation: [], wellbeing: [], nationalTests3: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
   },
 };
 
@@ -238,8 +234,8 @@ function seededValue(seed, year, min, max, decimals = 0) {
 
 function mockSeries(entityName, key, unit) {
   return YEARS.map((year) => {
-    const lower = unit === "%" ? 55 : unit === "poäng" ? 185 : unit === "index 0-10" ? 4 : key === "operatingResult" ? -2500 : 8;
-    const upper = unit === "%" ? 95 : unit === "poäng" ? 245 : unit === "index 0-10" ? 8.8 : key === "operatingResult" ? 1500 : 380;
+    const lower = unit === "%" ? 55 : unit === "poäng" ? 185 : unit === "index 0-10" ? 4 : 8;
+    const upper = unit === "%" ? 95 : unit === "poäng" ? 245 : unit === "index 0-10" ? 8.8 : 380;
     const decimals = unit === "%" || unit === "index 0-10" ? 1 : 0;
     return { year, value: seededValue(`${entityName}-${key}`, year, lower, upper, decimals), source: "Exempeldata" };
   });
@@ -530,6 +526,8 @@ function getEntityStage(entity) {
 }
 
 function isMetricVisibleForEntity(metric, entity) {
+  if (metric.entityTypes && !metric.entityTypes.includes(entity.type)) return false;
+  if (metric.schoolTitles && entity.type === "school" && !metric.schoolTitles.includes(entity.title)) return false;
   if (!metric.stage) return true;
   return metric.stage.includes(getEntityStage(entity));
 }
@@ -634,6 +632,93 @@ function MetricCard({ metric, data, entityTitle }) {
   );
 }
 
+function combineSalsaData(meritSeries = [], salsaMeritSeries = [], salsaEligibilitySeries = []) {
+  const byYear = new Map();
+  for (const item of meritSeries) {
+    if (!Number.isFinite(Number(item.value))) continue;
+    byYear.set(item.year, { ...(byYear.get(item.year) || { year: item.year }), meritValue: item.value });
+  }
+  for (const item of salsaMeritSeries) {
+    if (!Number.isFinite(Number(item.value))) continue;
+    const existing = byYear.get(item.year) || { year: item.year };
+    existing.salsaMerit = item.value;
+    existing.expectedMeritValue = Number((Number(existing.meritValue) - Number(item.value)).toFixed(1));
+    byYear.set(item.year, existing);
+  }
+  for (const item of salsaEligibilitySeries) {
+    if (!Number.isFinite(Number(item.value))) continue;
+    const existing = byYear.get(item.year) || { year: item.year };
+    existing.salsaEligibility = item.value;
+    byYear.set(item.year, existing);
+  }
+  return Array.from(byYear.values())
+    .filter((item) => Number.isFinite(Number(item.meritValue)) || Number.isFinite(Number(item.salsaMerit)) || Number.isFinite(Number(item.salsaEligibility)))
+    .sort((a, b) => a.year - b.year)
+    .map((item) => ({ ...item, år: formatMetricYear(item.year, { period: "calendarYear" }) }));
+}
+
+function SalsaAnalysisCard({ meritSeries, salsaMeritSeries, salsaEligibilitySeries }) {
+  const data = combineSalsaData(meritSeries, salsaMeritSeries, salsaEligibilitySeries);
+  if (!data.length) return null;
+  const latest = [...data].reverse().find((item) => Number.isFinite(Number(item.salsaMerit)) || Number.isFinite(Number(item.salsaEligibility)));
+  const latestMeritText = Number.isFinite(Number(latest?.salsaMerit))
+    ? `Meritvärdet ligger ${Math.abs(latest.salsaMerit).toLocaleString("sv-SE", { maximumFractionDigits: 1 })} poäng ${latest.salsaMerit >= 0 ? "över" : "under"} förväntat värde.`
+    : "Meritvärdets avvikelse saknas för senaste år.";
+  const latestEligibilityText = Number.isFinite(Number(latest?.salsaEligibility))
+    ? `Resultatavvikelsen är ${latest.salsaEligibility.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} procentenheter.`
+    : "Resultatavvikelse saknas för senaste år.";
+
+  return (
+    <Card className="metric-card salsa-card">
+      <CardContent className="metric-content">
+        <div className="metric-heading">
+          <div>
+            <h3>SALSA-analys</h3>
+            <p className="metric-description">SALSA jämför skolans faktiska resultat med ett förväntat värde utifrån elevsammansättning. Positiv avvikelse betyder resultat över modellens förväntan.</p>
+            <p>Kolada: KPI 19, 21 och 22</p>
+          </div>
+          <span>Kolada</span>
+        </div>
+        <div className="salsa-summary">
+          <strong>{latest?.year ?? "–"}</strong>
+          <span>{latestMeritText}</span>
+          <span>{latestEligibilityText}</span>
+        </div>
+        <div className="salsa-charts">
+          <div>
+            <p>Meritvärde åk 9</p>
+            <ResponsiveContainer width="100%" height={220}>
+              <LineChart data={data} margin={{ top: 12, right: 18, left: 8, bottom: 0 }}>
+                <CartesianGrid vertical={false} stroke="#d9d9d9" />
+                <XAxis dataKey="år" tick={{ fontSize: 12, fill: "#000", fontWeight: 800 }} tickLine={false} axisLine={false} />
+                <YAxis tick={{ fontSize: 12, fill: "#000", fontWeight: 800 }} tickLine={false} axisLine={false} domain={["auto", "auto"]} />
+                <Tooltip formatter={(value, name) => [`${compactNumber(value)} poäng`, name]} />
+                <Legend wrapperStyle={{ fontSize: 12, fontWeight: 800 }} iconType="line" />
+                <Line type="monotone" dataKey="meritValue" name="Faktiskt meritvärde" stroke="#14b8a6" strokeWidth={2.2} dot={{ r: 3 }} connectNulls />
+                <Line type="monotone" dataKey="expectedMeritValue" name="Förväntat meritvärde" stroke="#f97316" strokeWidth={2} strokeDasharray="5 5" dot={{ r: 3 }} connectNulls />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+          <div>
+            <p>Avvikelse från förväntat</p>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={data} margin={{ top: 12, right: 18, left: 8, bottom: 0 }}>
+                <CartesianGrid vertical={false} stroke="#d9d9d9" />
+                <XAxis dataKey="år" tick={{ fontSize: 12, fill: "#000", fontWeight: 800 }} tickLine={false} axisLine={false} />
+                <YAxis tick={{ fontSize: 12, fill: "#000", fontWeight: 800 }} tickLine={false} axisLine={false} domain={["auto", "auto"]} />
+                <Tooltip formatter={(value, name) => [`${compactNumber(value)} ${name === "Meritvärde" ? "poäng" : "procentenheter"}`, name]} />
+                <Legend wrapperStyle={{ fontSize: 12, fontWeight: 800 }} iconType="rect" />
+                <Bar dataKey="salsaMerit" name="Meritvärde" fill="#14b8a6" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="salsaEligibility" name="Resultat" fill="#f97316" radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function SourcesPanel({ metrics }) {
   const kolada = metrics.filter((m) => !m.localNeeded).length;
   const local = metrics.filter((m) => m.localNeeded === true).length;
@@ -659,6 +744,8 @@ function SavsjoQualityDashboard() {
   const visibleMetrics = useMemo(() => KPI_CATALOG.filter((m) => isMetricVisibleForEntity(m, selected)), [selected]);
   const prerequisiteMetrics = useMemo(() => visibleMetrics.filter((metric) => metric.category === "förutsättningar"), [visibleMetrics]);
   const outcomeMetrics = useMemo(() => visibleMetrics.filter((metric) => metric.category === "utfall"), [visibleMetrics]);
+  const outcomeCardMetrics = useMemo(() => outcomeMetrics.filter((metric) => !SALSA_ANALYSIS_KEYS.has(metric.key)), [outcomeMetrics]);
+  const showSalsaAnalysis = selected.type === "school" && ["7-9", "F-9"].includes(getEntityStage(selected));
 
   async function sync() {
     setLoading(true);
@@ -771,9 +858,16 @@ function SavsjoQualityDashboard() {
           </div>
 
           <section className="metric-grid">
-            {outcomeMetrics.map((metric) => (
+            {outcomeCardMetrics.map((metric) => (
               <MetricCard key={metric.key} metric={metric} data={series[metric.key] || mockSeries(selected.title, metric.key, metric.unit)} entityTitle={selected.title} />
             ))}
+            {showSalsaAnalysis && (
+              <SalsaAnalysisCard
+                meritSeries={series.meritValue || []}
+                salsaMeritSeries={series.salsaMerit || []}
+                salsaEligibilitySeries={series.salsaEligibility || []}
+              />
+            )}
           </section>
 
           <footer className="report-footer">
