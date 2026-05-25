@@ -48,6 +48,9 @@ const EXTERNAL_COMPARISON_METRICS = new Set([
   "svenska6",
   "matematik6",
   "knowledge6",
+  "gradePointSwedish6",
+  "gradePointMath6",
+  "gradePointSva6",
   "engelska6",
   "gymEligibility",
   "meritValue",
@@ -84,7 +87,7 @@ const STAGES = [
 
 const PREREQ_KPIS = [
   { id: "N15807", name: "Antal elever i grundskolan (åk 1-9)", description: "Elever i grundskola belägen i kommunen årskurs 1-9", unit: "antal" },
-  { id: "N15033", name: "Elever per lärare i grundskolan", description: "Genomsnittligt antal elever per heltidstjänst lärare", unit: "antal" },
+  { id: "N15034", name: "Elever/lärare i kommunal grundskola åk 1-9", description: "Antal elever per lärare omräknat till heltidstjänster i kommunala skolor i kommunen", unit: "antal" },
   { id: "N15030", name: "Andel lärare med pedagogisk högskoleexamen", description: "Andel lärare med pedagogisk högskoleutbildning", unit: "procent" },
 ];
 
@@ -94,6 +97,9 @@ const OUTCOME_F6_KPIS = [
   { id: "N15486", name: "Andel elever åk 6 med lägst betyget E i svenska", description: "Elever med lägst betyget E i svenska, årskurs 6", unit: "procent" },
   { id: "N15483", name: "Andel elever åk 6 med lägst betyget E i matematik", description: "Elever med lägst betyget E i matematik, årskurs 6", unit: "procent" },
   { id: "N15480", name: "Andel elever åk 6 med lägst betyget E i engelska", description: "Elever med lägst betyget E i engelska, årskurs 6", unit: "procent" },
+  { id: "N15514", name: "Betygspoäng i svenska åk 6", description: "Elever i åk 6, betygspoäng i svenska, kommunala skolor, genomsnitt", unit: "poäng" },
+  { id: "N15513", name: "Betygspoäng i matematik åk 6", description: "Elever i åk 6, betygspoäng i matematik, kommunala skolor, genomsnitt", unit: "poäng" },
+  { id: "N15515", name: "Betygspoäng i svenska som andraspråk åk 6", description: "Elever i åk 6, betygspoäng i svenska som andraspråk, kommunala skolor, genomsnitt", unit: "poäng" },
 ];
 
 const OUTCOME_79_KPIS = [
@@ -169,7 +175,7 @@ const KPI_CATALOG = [
   { key: "staffAbsence", order: 6, title: "Frånvaro personal", unit: "%", chart: "line", source: "Lokal HR-rapport: sjukfrånvaro BU", localNeeded: true, category: "förutsättningar", period: "calendarYear", compareMunicipality: true, description: "Sjukfrånvaro i procent av ordinarie arbetstid. Totalen bygger på BU-rapportens detaljrader och skolenheter aggregeras från respektive enhetsrader." },
   { key: "teacherEligibility", order: 7, title: "Lärarlegitimation och behörighet", unit: "%", chart: "line", kpiIds: ["N15814"], source: "Kolada: N15814", localNeeded: false, category: "förutsättningar", description: "Lärare, omräknat till heltidstjänster, med lärarlegitimation och behörighet i grundskola åk 1-9, kommunala skolor." },
   { key: "teacherPedagogicalDegree", order: 8, title: "Lärare med pedagogisk högskoleexamen", unit: "%", chart: "line", kpiIds: ["N15030"], source: "Kolada: N15030", localNeeded: false, category: "förutsättningar" },
-  { key: "studentsPerTeacher", order: 9, title: "Antal elever per lärare", unit: "antal", chart: "line", kpiIds: ["N15033"], source: "Kolada: N15033", localNeeded: false, category: "förutsättningar" },
+  { key: "studentsPerTeacher", order: 9, title: "Elever/lärare i kommunal grundskola", unit: "antal", chart: "line", kpiIds: ["N15034"], source: "Kolada: N15034", localNeeded: false, dataLevel: "municipality", category: "förutsättningar", description: "Antal elever per lärare i årskurs 1-9 omräknat till heltidstjänster, i kommunala skolor i kommunen. Avser läsår, mätt den 15 oktober." },
   { key: "studentAbsence", order: 10, title: "Frånvaro elever", unit: "%", chart: "line", source: "Lokal frånvarorapport från Edlevo", localNeeded: true, category: "förutsättningar", compareMunicipality: true },
   { key: "parentHigherEducation", order: 11, title: "Föräldrar med eftergymnasial utbildning", unit: "%", chart: "line", kpiIds: ["N15816"], source: "Kolada: N15816", localNeeded: false, category: "förutsättningar", compareMunicipality: true },
   { key: "wellbeing", order: 12, title: "Trivsel elever", unit: "%", chart: "bar", source: "Lokal enkät eller Skolenkäten där jämförbart värde finns", localNeeded: true, category: "förutsättningar" },
@@ -189,7 +195,11 @@ const KPI_CATALOG = [
   ] },
   { key: "svenska6", order: 12, title: "Åk 6 minst E i svenska", unit: "%", chart: "line", kpiIds: ["N15486"], source: "Kolada: N15486", localNeeded: false, stage: ["F-6", "F-9"], category: "utfall" },
   { key: "matematik6", order: 13, title: "Åk 6 minst E i matematik", unit: "%", chart: "line", kpiIds: ["N15483"], source: "Kolada: N15483", localNeeded: false, stage: ["F-6", "F-9"], category: "utfall" },
-  { key: "knowledge6", order: 14, title: "Åk 6 uppnått betygskriterierna i alla ämnen", unit: "%", chart: "line", kpiIds: ["N15540"], source: "Kolada: N15540", localNeeded: false, stage: ["F-6", "F-9"], category: "utfall", compareMunicipality: true },
+  { key: "engelska6", order: 14, title: "Åk 6 minst E i engelska", unit: "%", chart: "line", kpiIds: ["N15480"], source: "Kolada: N15480", localNeeded: false, stage: ["F-6", "F-9"], category: "utfall" },
+  { key: "knowledge6", order: 15, title: "Åk 6 uppnått betygskriterierna i alla ämnen", unit: "%", chart: "line", kpiIds: ["N15540"], source: "Kolada: N15540", localNeeded: false, stage: ["F-6", "F-9"], category: "utfall", compareMunicipality: true },
+  { key: "gradePointSwedish6", order: 16, title: "Åk 6 betygspoäng svenska", unit: "poäng", chart: "line", kpiIds: ["N15514"], source: "Kolada: N15514", localNeeded: false, stage: ["F-6", "F-9"], category: "utfall", compareMunicipality: true, description: "Genomsnittlig betygspoäng i svenska för elever i årskurs 6, kommunala skolor." },
+  { key: "gradePointMath6", order: 17, title: "Åk 6 betygspoäng matematik", unit: "poäng", chart: "line", kpiIds: ["N15513"], source: "Kolada: N15513", localNeeded: false, stage: ["F-6", "F-9"], category: "utfall", compareMunicipality: true, description: "Genomsnittlig betygspoäng i matematik för elever i årskurs 6, kommunala skolor." },
+  { key: "gradePointSva6", order: 18, title: "Åk 6 betygspoäng svenska som andraspråk", unit: "poäng", chart: "line", kpiIds: ["N15515"], source: "Kolada: N15515", localNeeded: false, stage: ["F-6", "F-9"], category: "utfall", compareMunicipality: true, description: "Genomsnittlig betygspoäng i svenska som andraspråk för elever i årskurs 6, kommunala skolor." },
   { key: "knowledge9", order: 15, title: "Åk 9 uppnått betygskriterierna i alla ämnen", unit: "%", chart: "line", kpiIds: ["N15419"], source: "Kolada: N15419", localNeeded: false, stage: ["7-9", "F-9"], category: "utfall", compareMunicipality: true },
   { key: "schoolSurvey5", order: 16, title: "Skolenkäten årskurs 5", unit: "index 0-10", chart: "bar", source: "Kolada, redovisas vartannat år", localNeeded: false, stage: ["F-6", "F-9"], category: "utfall", description: "Indexvärden 0-10 inom stimulans, stöd, studiero, trygghet och skolans arbete med att förhindra kränkningar. Ett högt indexvärde indikerar en positiv uppfattning hos eleverna.", series: [
     { key: "stimulans", label: "Stimulans", kpiIds: ["N15602"], color: "#14b8a6", scale: 0.1 },
@@ -205,7 +215,6 @@ const KPI_CATALOG = [
     { key: "trygghet", label: "Trygghet", kpiIds: ["N15643"], color: "#e11d48", scale: 0.1 },
     { key: "krankningar", label: "Förhindra kränkningar", kpiIds: ["N15644"], color: "#8b5cf6", scale: 0.1 },
   ] },
-  { key: "engelska6", order: 17, title: "Åk 6 minst E i engelska", unit: "%", chart: "line", kpiIds: ["N15480"], source: "Kolada: N15480", localNeeded: false, stage: ["F-6", "F-9"], category: "utfall" },
   { key: "gymEligibility", order: 18, title: "Gymnasiebehörighet", unit: "%", chart: "line", kpiIds: ["N15424"], source: "Kolada: N15424", localNeeded: false, stage: ["7-9", "F-9"], category: "utfall" },
   { key: "meritValue", order: 19, title: "Genomsnittligt meritvärde", unit: "poäng", chart: "line", kpiIds: ["N15504"], source: "Kolada: N15504", localNeeded: false, stage: ["7-9", "F-9"], category: "utfall", compareMunicipality: true },
   { key: "mathGrade9", order: 20, title: "Åk 9 betygspoäng matematik", unit: "poäng", chart: "line", kpiIds: ["N15503"], source: "Kolada: N15503", localNeeded: false, stage: ["7-9", "F-9"], category: "utfall" },
