@@ -207,7 +207,7 @@ const KPI_CATALOG = [
   ] },
   { key: "engelska6", order: 17, title: "Åk 6 minst E i engelska", unit: "%", chart: "line", kpiIds: ["N15480"], source: "Kolada: N15480", localNeeded: false, stage: ["F-6", "F-9"], category: "utfall" },
   { key: "gymEligibility", order: 18, title: "Gymnasiebehörighet", unit: "%", chart: "line", kpiIds: ["N15424"], source: "Kolada: N15424", localNeeded: false, stage: ["7-9", "F-9"], category: "utfall" },
-  { key: "meritValue", order: 19, title: "Genomsnittligt meritvärde", unit: "poäng", chart: "line", kpiIds: ["N15504"], source: "Kolada: N15504", localNeeded: false, stage: ["7-9", "F-9"], category: "utfall" },
+  { key: "meritValue", order: 19, title: "Genomsnittligt meritvärde", unit: "poäng", chart: "line", kpiIds: ["N15504"], source: "Kolada: N15504", localNeeded: false, stage: ["7-9", "F-9"], category: "utfall", compareMunicipality: true },
   { key: "mathGrade9", order: 20, title: "Åk 9 betygspoäng matematik", unit: "poäng", chart: "line", kpiIds: ["N15503"], source: "Kolada: N15503", localNeeded: false, stage: ["7-9", "F-9"], category: "utfall" },
   { key: "salsaEligibility", order: 21, title: "SALSA avvikelse resultat", unit: "procentenheter", chart: "line", kpiIds: ["U15414"], source: "Kolada: U15414", localNeeded: false, stage: ["7-9", "F-9"], entityTypes: ["school"], category: "utfall" },
   { key: "salsaMerit", order: 22, title: "SALSA avvikelse meritvärde", unit: "poäng", chart: "line", kpiIds: ["U15416"], source: "Kolada: U15416", localNeeded: false, stage: ["7-9", "F-9"], entityTypes: ["school"], category: "utfall" },
@@ -636,7 +636,13 @@ function combineSalsaData(meritSeries = [], salsaMeritSeries = [], salsaEligibil
   const byYear = new Map();
   for (const item of meritSeries) {
     if (!Number.isFinite(Number(item.value))) continue;
-    byYear.set(item.year, { ...(byYear.get(item.year) || { year: item.year }), meritValue: item.value });
+    byYear.set(item.year, {
+      ...(byYear.get(item.year) || { year: item.year }),
+      meritValue: item.value,
+      municipalityValue: item.municipalityValue,
+      riketValue: item.riketValue,
+      similarValue: item.similarValue,
+    });
   }
   for (const item of salsaMeritSeries) {
     if (!Number.isFinite(Number(item.value))) continue;
@@ -673,9 +679,9 @@ function SalsaAnalysisCard({ meritSeries, salsaMeritSeries, salsaEligibilitySeri
       <CardContent className="metric-content">
         <div className="metric-heading">
           <div>
-            <h3>SALSA-analys</h3>
+            <h3>21-22. SALSA i relation till meritvärde</h3>
             <p className="metric-description">SALSA jämför skolans faktiska resultat med ett förväntat värde utifrån elevsammansättning. Positiv avvikelse betyder resultat över modellens förväntan.</p>
-            <p>Kolada: KPI 19, 21 och 22</p>
+            <p>Kolada: KPI 19, 21 och 22. Meritvärde jämförs med kommun, riket och liknande kommuner där data finns.</p>
           </div>
           <span>Kolada</span>
         </div>
@@ -696,6 +702,15 @@ function SalsaAnalysisCard({ meritSeries, salsaMeritSeries, salsaEligibilitySeri
                 <Legend wrapperStyle={{ fontSize: 12, fontWeight: 800 }} iconType="line" />
                 <Line type="monotone" dataKey="meritValue" name="Faktiskt meritvärde" stroke="#14b8a6" strokeWidth={2.2} dot={{ r: 3 }} connectNulls />
                 <Line type="monotone" dataKey="expectedMeritValue" name="Förväntat meritvärde" stroke="#f97316" strokeWidth={2} strokeDasharray="5 5" dot={{ r: 3 }} connectNulls />
+                {data.some((item) => Number.isFinite(Number(item.municipalityValue))) && (
+                  <Line type="monotone" dataKey="municipalityValue" name="Kommun" stroke="#0f172a" strokeWidth={1.8} strokeDasharray="3 4" dot={{ r: 2 }} connectNulls />
+                )}
+                {data.some((item) => Number.isFinite(Number(item.riketValue))) && (
+                  <Line type="monotone" dataKey="riketValue" name="Riket" stroke="#64748b" strokeWidth={1.8} dot={{ r: 2 }} connectNulls />
+                )}
+                {data.some((item) => Number.isFinite(Number(item.similarValue))) && (
+                  <Line type="monotone" dataKey="similarValue" name="Liknande kommuner" stroke="#2563eb" strokeWidth={1.8} strokeDasharray="3 4" dot={{ r: 2 }} connectNulls />
+                )}
               </LineChart>
             </ResponsiveContainer>
           </div>
