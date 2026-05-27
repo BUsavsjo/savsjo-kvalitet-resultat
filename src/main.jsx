@@ -212,17 +212,17 @@ const SCHOOL_FALLBACK = getPredefinedSkolenheter(MUNICIPALITY_ID);
 const KPI_CATALOG = [
   { key: "students", order: 1, title: "Antal elever", unit: "antal", chart: "line", kpiIds: ["N15835"], schoolKpiIds: ["N15807", "N11805"], source: "Kolada: N15835, skolenhet N15807 + N11805", localNeeded: false, category: "förutsättningar" },
   { key: "adaptedStudents", order: 2, title: "Elever i anpassad grundskola", unit: "antal", chart: "line", kpiIds: ["N18803"], source: "Kolada: N18803", localNeeded: "partial", schoolTitles: ["Hägneskolan"], category: "förutsättningar" },
-  { key: "budgetDeviation", order: 4, title: "Budgetavvikelse", unit: "tkr", chart: "line", source: "Lokal ekonomiimport: Budgetavvikelse 5 år.xlsx", localNeeded: true, category: "förutsättningar", series: [
+  { key: "budgetDeviation", order: 4, title: "Budgetavvikelse", unit: "tkr", chart: "line", source: "Lokal ekonomiimport: Budgetavvikelse 5 år.xlsx", localNeeded: true, category: "förutsättningar", period: "calendarYear", series: [
     { key: "grundskola", label: "Grundskola", color: "#14b8a6" },
     { key: "fritids", label: "Fritidshem", color: "#f97316" },
     { key: "anpassadGrundskola", label: "Anpassad grundskola", color: "#8b5cf6" },
     { key: "totalt", label: "Totalt", color: "#0f172a" },
   ] },
-  { key: "netCost", order: 5, title: "Kostnad grundskola åk 1-9", unit: "kr/elev", chart: "line", kpiIds: ["N15006"], source: "Kolada: N15006, källa SCB", localNeeded: "partial", dataLevel: "municipality", category: "förutsättningar", description: "Bruttokostnad minus interna intäkter plus kostnad för skolskjuts minus försäljning av verksamhet till andra kommuner, dividerat med medelvärde av antal folkbokförda elever i grundskola åk 1-9." },
+  { key: "netCost", order: 5, title: "Kostnad grundskola åk 1-9", unit: "kr/elev", chart: "line", kpiIds: ["N15006"], source: "Kolada: N15006, källa SCB", localNeeded: "partial", dataLevel: "municipality", category: "förutsättningar", period: "calendarYear", description: "Bruttokostnad minus interna intäkter plus kostnad för skolskjuts minus försäljning av verksamhet till andra kommuner, dividerat med medelvärde av antal folkbokförda elever i grundskola åk 1-9. Avser kalenderår." },
   { key: "staffAbsence", order: 6, title: "Frånvaro personal", unit: "%", chart: "line", source: "Lokal HR-rapport: sjukfrånvaro BU", localNeeded: true, category: "förutsättningar", period: "calendarYear", compareMunicipality: true, description: "Sjukfrånvaro i procent av ordinarie arbetstid. Totalen bygger på BU-rapportens detaljrader och skolenheter aggregeras från respektive enhetsrader." },
   { key: "teacherEligibility", order: 7, title: "Lärarlegitimation och behörighet", unit: "%", chart: "line", kpiIds: ["N15814"], source: "Kolada: N15814", localNeeded: false, category: "förutsättningar", description: "Lärare, omräknat till heltidstjänster, med lärarlegitimation och behörighet i grundskola åk 1-9, kommunala skolor." },
   { key: "teacherPedagogicalDegree", order: 8, title: "Lärare med pedagogisk högskoleexamen", unit: "%", chart: "line", kpiIds: ["N15030"], source: "Kolada: N15030", localNeeded: false, category: "förutsättningar" },
-  { key: "studentsPerTeacher", order: 9, title: "Elever/lärare i kommunal grundskola", unit: "antal", chart: "line", kpiIds: ["N15034"], source: "Kolada: N15034", localNeeded: false, dataLevel: "municipality", category: "förutsättningar", description: "Antal elever per lärare i årskurs 1-9 omräknat till heltidstjänster, i kommunala skolor i kommunen. Avser läsår, mätt den 15 oktober." },
+  { key: "studentsPerTeacher", order: 9, title: "Elever/lärare i grundskola", unit: "antal", chart: "line", kpiIds: ["N15034"], schoolKpiIds: ["N15033"], source: "Kolada: kommun N15034, skolenhet N15033", localNeeded: false, category: "förutsättningar", description: "Kommunnivå visar elever per lärare i kommunal grundskola åk 1-9. Enhetsnivå visar antal elever per lärare på skolenhet enligt Kolada N15033. Avser läsår, mätt den 15 oktober." },
   { key: "studentAbsence", order: 10, title: "Frånvaro elever", unit: "%", chart: "line", source: "Lokal frånvarorapport från Edlevo", localNeeded: true, category: "förutsättningar", compareMunicipality: true },
   { key: "parentHigherEducation", order: 11, title: "Föräldrar med eftergymnasial utbildning", unit: "%", chart: "line", kpiIds: ["N15816"], source: "Kolada: N15816", localNeeded: false, category: "förutsättningar", compareMunicipality: true },
   { key: "wellbeing", order: 12, title: "Trivsel elever", unit: "%", chart: "bar", source: "Lokal enkät eller Skolenkäten där jämförbart värde finns", localNeeded: true, category: "förutsättningar" },
@@ -248,14 +248,14 @@ const KPI_CATALOG = [
   { key: "gradePointMath6", order: 17, title: "Åk 6 betygspoäng matematik", unit: "poäng", chart: "line", kpiIds: ["N15513"], source: "Kolada: N15513", localNeeded: false, stage: ["F-6", "F-9"], category: "utfall", compareMunicipality: true, description: "Genomsnittlig betygspoäng i matematik för elever i årskurs 6, kommunala skolor." },
   { key: "gradePointSva6", order: 18, title: "Åk 6 betygspoäng svenska som andraspråk", unit: "poäng", chart: "line", kpiIds: ["N15515"], source: "Kolada: N15515", localNeeded: false, stage: ["F-6", "F-9"], entityTypes: ["municipality"], category: "utfall", description: "Genomsnittlig betygspoäng i svenska som andraspråk för elever i årskurs 6, kommunala skolor. Visas bara på kommunnivå eftersom Kolada saknar skolenhetsvärden för detta mått." },
   { key: "knowledge9", order: 15, title: "Åk 9 uppnått betygskriterierna i alla ämnen", unit: "%", chart: "line", kpiIds: ["N15419"], source: "Kolada: N15419", localNeeded: false, stage: ["7-9", "F-9"], category: "utfall", compareMunicipality: true },
-  { key: "schoolSurvey5", order: 16, title: "Skolenkäten årskurs 5", unit: "index 0-10", chart: "bar", source: "Kolada, redovisas vartannat år", localNeeded: false, stage: ["F-6", "F-9"], category: "utfall", description: "Indexvärden 0-10 inom stimulans, stöd, studiero, trygghet och skolans arbete med att förhindra kränkningar. Ett högt indexvärde indikerar en positiv uppfattning hos eleverna.", series: [
+  { key: "schoolSurvey5", order: 16, title: "Skolenkäten årskurs 5", unit: "index 0-10", chart: "bar", source: "Kolada, redovisas vartannat år", localNeeded: false, stage: ["F-6", "F-9"], category: "utfall", period: "surveyYear", description: "Indexvärden 0-10 inom stimulans, stöd, studiero, trygghet och skolans arbete med att förhindra kränkningar. Visas efter enkätår eftersom Skolenkäten genomförs vartannat år.", series: [
     { key: "stimulans", label: "Stimulans", kpiIds: ["N15602"], color: "#14b8a6", scale: 0.1 },
     { key: "stod", label: "Stöd", kpiIds: ["N15623"], color: "#0ea5e9", scale: 0.1 },
     { key: "studiero", label: "Studiero", kpiIds: ["N15603"], color: "#f97316", scale: 0.1 },
     { key: "trygghet", label: "Trygghet", kpiIds: ["N15613"], color: "#e11d48", scale: 0.1 },
     { key: "krankningar", label: "Förhindra kränkningar", kpiIds: ["N15614"], color: "#8b5cf6", scale: 0.1 },
   ] },
-  { key: "schoolSurvey8", order: 16, title: "Skolenkäten årskurs 8", unit: "index 0-10", chart: "bar", source: "Kolada, redovisas vartannat år", localNeeded: false, stage: ["7-9", "F-9"], category: "utfall", description: "Indexvärden 0-10 inom stimulans, stöd, studiero, trygghet och skolans arbete med att förhindra kränkningar. Ett högt indexvärde indikerar en positiv uppfattning hos eleverna.", series: [
+  { key: "schoolSurvey8", order: 16, title: "Skolenkäten årskurs 8", unit: "index 0-10", chart: "bar", source: "Kolada, redovisas vartannat år", localNeeded: false, stage: ["7-9", "F-9"], category: "utfall", period: "surveyYear", description: "Indexvärden 0-10 inom stimulans, stöd, studiero, trygghet och skolans arbete med att förhindra kränkningar. Visas efter enkätår eftersom Skolenkäten genomförs vartannat år.", series: [
     { key: "stimulans", label: "Stimulans", kpiIds: ["N15632"], color: "#14b8a6", scale: 0.1 },
     { key: "stod", label: "Stöd", kpiIds: ["N15653"], color: "#0ea5e9", scale: 0.1 },
     { key: "studiero", label: "Studiero", kpiIds: ["N15633"], color: "#f97316", scale: 0.1 },
@@ -606,7 +606,16 @@ function formatSchoolYear(year) {
 }
 
 function formatMetricYear(year, metric) {
+  if (metric.period === "surveyYear") return `Enkät ${year}`;
   return metric.period === "calendarYear" ? String(year) : formatSchoolYear(year);
+}
+
+function getMetricDomain(metric) {
+  if (metric.key === "staffAbsence") return [0, 15];
+  if (metric.key === "studentAbsence") return [0, 25];
+  if (metric.unit === "%") return [0, 100];
+  if (metric.unit === "index 0-10") return [0, 10];
+  return ["auto", "auto"];
 }
 
 function MetricChart({ metric, data, entityTitle }) {
@@ -625,7 +634,7 @@ function MetricChart({ metric, data, entityTitle }) {
     <>
       <CartesianGrid vertical={false} stroke="#d9d9d9" />
       <XAxis dataKey="år" tick={{ fontSize: 12, fill: "#000", fontWeight: 800 }} tickLine={false} axisLine={false} />
-      <YAxis tick={{ fontSize: 12, fill: "#000", fontWeight: 800 }} tickFormatter={(value) => metric.unit === "%" ? `${value}%` : value} domain={metric.unit === "%" ? [0, 100] : metric.unit === "index 0-10" ? [0, 10] : ["auto", "auto"]} tickLine={false} axisLine={false} />
+      <YAxis tick={{ fontSize: 12, fill: "#000", fontWeight: 800 }} tickFormatter={(value) => metric.unit === "%" ? `${value}%` : value} domain={getMetricDomain(metric)} tickLine={false} axisLine={false} />
       <Tooltip formatter={(value, name) => [`${compactNumber(value)} ${metric.unit}`, name]} />
       <Legend wrapperStyle={{ fontSize: 12, fontWeight: 800 }} iconType="line" />
     </>
