@@ -17,6 +17,7 @@ import { Download, FileText, RefreshCw, School, Building2, Database, AlertTriang
 import "./styles.css";
 import staffAbsenceData from "./data/sjukfranvaro_personal.json";
 import studentAbsenceData from "./data/franvaro_elever.json";
+import studentAbsenceKpiData from "./data/kpi_franvaro_alla_lasar.json";
 import nationalTests3Data from "./data/ak3_np.json";
 import budgetDeviationData from "./data/budgetavvikelse.json";
 
@@ -46,6 +47,7 @@ const EXTERNAL_COMPARISON_METRICS = new Set([
   "teacherEligibility",
   "studentsPerTeacher",
   "netCost",
+  "preschoolClassCost",
   "svenska6",
   "matematik6",
   "knowledge6",
@@ -74,6 +76,7 @@ const METRIC_SECTIONS = {
   adaptedStudents: "organisation",
   budgetDeviation: "organisation",
   netCost: "organisation",
+  preschoolClassCost: "organisation",
   staffAbsence: "organisation",
   studentsPerTeacher: "organisation",
   teacherEligibility: "competence",
@@ -219,10 +222,11 @@ const KPI_CATALOG = [
     { key: "totalt", label: "Totalt", color: "#0f172a" },
   ] },
   { key: "netCost", order: 5, title: "Kostnad grundskola åk 1-9", unit: "kr/elev", chart: "line", kpiIds: ["N15006"], source: "Kolada: N15006, källa SCB", localNeeded: "partial", dataLevel: "municipality", category: "förutsättningar", period: "calendarYear", description: "Bruttokostnad minus interna intäkter plus kostnad för skolskjuts minus försäljning av verksamhet till andra kommuner, dividerat med medelvärde av antal folkbokförda elever i grundskola åk 1-9. Avser kalenderår." },
+  { key: "preschoolClassCost", order: 5.1, title: "Kostnad kommunal förskoleklass", unit: "kr/elev", chart: "line", kpiIds: ["N15053"], source: "Kolada: N15053, källa SCB", localNeeded: "partial", dataLevel: "municipality", category: "förutsättningar", period: "calendarYear", description: "Kostnad kommunal förskoleklass dividerat med antal elever i förskoleklass i kommunens egen regi. Avser kalenderår och egen regi." },
   { key: "staffAbsence", order: 6, title: "Frånvaro personal", unit: "%", chart: "line", source: "Lokal HR-rapport: sjukfrånvaro BU", localNeeded: true, category: "förutsättningar", period: "calendarYear", compareMunicipality: true, description: "Sjukfrånvaro i procent av ordinarie arbetstid. Totalen bygger på BU-rapportens detaljrader och skolenheter aggregeras från respektive enhetsrader." },
   { key: "teacherEligibility", order: 7, title: "Lärarlegitimation och behörighet", unit: "%", chart: "line", kpiIds: ["N15814"], source: "Kolada: N15814", localNeeded: false, category: "förutsättningar", description: "Lärare, omräknat till heltidstjänster, med lärarlegitimation och behörighet i grundskola åk 1-9, kommunala skolor." },
   { key: "teacherPedagogicalDegree", order: 8, title: "Lärare med pedagogisk högskoleexamen", unit: "%", chart: "line", kpiIds: ["N15030"], source: "Kolada: N15030", localNeeded: false, category: "förutsättningar" },
-  { key: "studentsPerTeacher", order: 9, title: "Elever/lärare i grundskola", unit: "antal", chart: "line", kpiIds: ["N15034"], schoolKpiIds: ["N15033"], source: "Kolada: kommun N15034, skolenhet N15033", localNeeded: false, category: "förutsättningar", description: "Kommunnivå visar elever per lärare i kommunal grundskola åk 1-9. Enhetsnivå visar antal elever per lärare på skolenhet enligt Kolada N15033. Avser läsår, mätt den 15 oktober." },
+  { key: "studentsPerTeacher", order: 9, title: "Elever/lärare i grundskola", unit: "antal", chart: "line", kpiIds: ["N15034"], schoolKpiIds: ["N15033"], source: "Kolada: kommun N15034, skolenhet N15033", localNeeded: false, category: "förutsättningar", compareMunicipality: true, description: "Kommunnivå visar elever per lärare i kommunal grundskola åk 1-9. Enhetsnivå visar antal elever per lärare på skolenhet enligt Kolada N15033. Avser läsår, mätt den 15 oktober." },
   { key: "studentAbsence", order: 10, title: "Frånvaro elever", unit: "%", chart: "line", source: "Lokal frånvarorapport från Edlevo", localNeeded: true, category: "förutsättningar", compareMunicipality: true },
   { key: "parentHigherEducation", order: 11, title: "Föräldrar med eftergymnasial utbildning", unit: "%", chart: "line", kpiIds: ["N15816"], source: "Kolada: N15816", localNeeded: false, category: "förutsättningar", compareMunicipality: true },
   { key: "wellbeing", order: 12, title: "Trivsel elever", unit: "%", chart: "bar", source: "Lokal enkät eller Skolenkäten där jämförbart värde finns", localNeeded: true, category: "förutsättningar" },
@@ -475,7 +479,103 @@ function toAbsencePoint(row) {
   };
 }
 
+const ABSENCE_SCHOOL_NAME_MAP = {
+  hofgard: "Hofgård",
+  hagne: "Hägne",
+  rorvik: "Rörvik",
+  rorviks: "Rörvik",
+  stockaryd: "Stockaryd",
+  stockaryds: "Stockaryd",
+  vallsjo: "Vallsjö",
+  vrigstad: "Vrigstad",
+};
+
+function fixMojibake(value) {
+  if (typeof value !== "string") return value;
+  return value
+    .replaceAll("Ã¥", "å")
+    .replaceAll("Ã¤", "ä")
+    .replaceAll("Ã¶", "ö")
+    .replaceAll("Ã…", "Å")
+    .replaceAll("Ã„", "Ä")
+    .replaceAll("Ã–", "Ö");
+}
+
+function normalizeAbsenceSchoolName(name = "") {
+  return fixMojibake(name)
+    .toLowerCase()
+    .replaceAll("å", "a")
+    .replaceAll("ä", "a")
+    .replaceAll("ö", "o")
+    .replace("sskolan", "")
+    .replace("skolan", "")
+    .replace("skola", "")
+    .replace(/\s+/g, "")
+    .trim();
+}
+
+function getAbsenceSchoolName(entityTitle) {
+  return ABSENCE_SCHOOL_NAME_MAP[normalizeAbsenceSchoolName(entityTitle)] || entityTitle;
+}
+
+function shareToPct(value) {
+  return Number.isFinite(Number(value)) ? Number((Number(value) * 100).toFixed(1)) : null;
+}
+
+function getAbsenceEndYear(schoolYear) {
+  const match = String(schoolYear || "").match(/(\d{4})$/);
+  return match ? Number(match[1]) : null;
+}
+
+function toAbsenceKpiPoint(summary, municipalitySummary) {
+  return {
+    year: getAbsenceEndYear(summary.school_year),
+    schoolYear: summary.school_year,
+    schoolName: fixMojibake(summary.school_name),
+    value: shareToPct(summary.avg_total_absence_share),
+    totalAbsence: shareToPct(summary.avg_total_absence_share),
+    unauthorisedAbsence: shareToPct(summary.avg_unauthorised_absence_share),
+    over10: shareToPct(summary.total_absence_over_10_share),
+    over15: shareToPct(summary.total_absence_15_plus_share),
+    over30: shareToPct(summary.total_absence_30_plus_share),
+    unauthorisedOver5: shareToPct(summary.unauthorised_absence_5_plus_share),
+    studentCount: summary.student_count,
+    over10Count: summary.total_absence_over_10_count,
+    over15Count: summary.total_absence_15_plus_count,
+    over30Count: summary.total_absence_30_plus_count,
+    unauthorisedOver5Count: summary.unauthorised_absence_5_plus_count,
+    riskLevel: summary.overall_risk_level,
+    municipalityValue: municipalitySummary ? shareToPct(municipalitySummary.avg_total_absence_share) : undefined,
+    municipalityOver15: municipalitySummary ? shareToPct(municipalitySummary.total_absence_15_plus_share) : undefined,
+    municipalityName: MUNICIPALITY_NAME,
+    source: "Lokal frånvaro-KPI",
+  };
+}
+
+function getStudentAbsenceKpiRows(entity) {
+  const summaries = studentAbsenceKpiData.summaries || [];
+  if (entity.type === "municipality") {
+    return summaries
+      .filter((item) => item.scope === "municipality")
+      .map((summary) => toAbsenceKpiPoint(summary, summary))
+      .filter((item) => Number.isFinite(item.year))
+      .sort((a, b) => a.year - b.year);
+  }
+
+  const schoolNameKey = normalizeAbsenceSchoolName(getAbsenceSchoolName(entity.title));
+  return summaries
+    .filter((item) => item.scope === "school" && normalizeAbsenceSchoolName(item.school_name) === schoolNameKey)
+    .map((summary) => {
+      const municipalitySummary = summaries.find((item) => item.scope === "municipality" && item.school_year === summary.school_year);
+      return toAbsenceKpiPoint(summary, municipalitySummary);
+    })
+    .filter((item) => Number.isFinite(item.year))
+    .sort((a, b) => a.year - b.year);
+}
+
 function getStudentAbsenceSeries(entity) {
+  const kpiRows = getStudentAbsenceKpiRows(entity);
+  if (kpiRows.length) return kpiRows;
   if (entity.type === "municipality") {
     return studentAbsenceData.municipality.map(toAbsencePoint);
   }
@@ -610,6 +710,21 @@ function formatMetricYear(year, metric) {
   return metric.period === "calendarYear" ? String(year) : formatSchoolYear(year);
 }
 
+function getMetricPeriodNote(metric, year) {
+  if (!year) return "Period saknas";
+  if (metric.key === "studentAbsence") return `Läsår ${formatSchoolYear(year)}`;
+  if (metric.period === "calendarYear") return `Kalenderår ${year}`;
+  if (metric.period === "surveyYear") return `Enkätår ${year}`;
+  return `Rapporterat år ${year}`;
+}
+
+function getMetricRenderData(metric, selected, series) {
+  const items = series[metric.key];
+  if (items?.length) return items;
+  if (metric.key === "studentAbsence") return [];
+  return mockSeries(selected.title, metric.key, metric.unit);
+}
+
 function getMetricDomain(metric) {
   if (metric.key === "staffAbsence") return [0, 15];
   if (metric.key === "studentAbsence") return [0, 25];
@@ -684,6 +799,9 @@ function MetricChart({ metric, data, entityTitle }) {
 }
 
 function MetricCard({ metric, data, entityTitle }) {
+  if (metric.key === "studentAbsence") {
+    return <StudentAbsenceRiskCard metric={metric} data={data} entityTitle={entityTitle} />;
+  }
   const latest = metric.series ? null : [...data].reverse().find((x) => Number.isFinite(Number(x.value)));
   const localFlag = metric.localNeeded === true ? "Lokal" : metric.localNeeded === "partial" ? "Delvis lokal" : "Kolada";
   return (
@@ -699,6 +817,298 @@ function MetricCard({ metric, data, entityTitle }) {
         </div>
         {!metric.series && <div className="metric-value">{latest ? compactNumber(latest.value) : "–"}<small>{metric.unit}</small></div>}
         <MetricChart metric={metric} data={data} entityTitle={entityTitle} />
+      </CardContent>
+    </Card>
+  );
+}
+
+function formatPct(value) {
+  return Number.isFinite(Number(value)) ? `${compactNumber(value)}%` : "â€“";
+}
+
+function formatCount(value) {
+  if (value === "<3") return "<3";
+  return Number.isFinite(Number(value)) ? new Intl.NumberFormat("sv-SE", { maximumFractionDigits: 0 }).format(value) : "â€“";
+}
+
+function getLatestAbsenceSchoolRows() {
+  const summaries = studentAbsenceKpiData.summaries || [];
+  const latestYear = Math.max(...summaries.filter((item) => item.scope === "school").map((item) => getAbsenceEndYear(item.school_year)).filter(Number.isFinite));
+  return summaries
+    .filter((item) => item.scope === "school" && getAbsenceEndYear(item.school_year) === latestYear)
+    .map((item) => toAbsenceKpiPoint(item, summaries.find((summary) => summary.scope === "municipality" && summary.school_year === item.school_year)))
+    .sort((a, b) => Number(b.over15 || 0) - Number(a.over15 || 0));
+}
+
+function getLatestAbsenceGradeRows(entityTitle) {
+  const summaries = studentAbsenceKpiData.summaries || [];
+  const schoolNameKey = normalizeAbsenceSchoolName(getAbsenceSchoolName(entityTitle));
+  const rows = summaries.filter((item) => item.scope === "school_grade" && normalizeAbsenceSchoolName(item.school_name) === schoolNameKey);
+  const latestYear = Math.max(...rows.map((item) => getAbsenceEndYear(item.school_year)).filter(Number.isFinite));
+  return rows
+    .filter((item) => getAbsenceEndYear(item.school_year) === latestYear)
+    .map((item) => ({ ...toAbsenceKpiPoint(item, null), grade: item.grade }))
+    .sort((a, b) => String(a.grade).localeCompare(String(b.grade), "sv", { numeric: true }));
+}
+
+function riskLabel(level) {
+  return {
+    low: "Låg",
+    attention: "Uppmärksamma",
+    risk: "Risk",
+    high: "Hög",
+    critical: "Kritisk",
+    red: "Röd",
+    yellow: "Gul",
+    green: "Grön",
+  }[level] || level || "â€“";
+}
+
+function getDelta(current, previous, key) {
+  if (!previous || !Number.isFinite(Number(current?.[key])) || !Number.isFinite(Number(previous?.[key]))) return null;
+  return Number((Number(current[key]) - Number(previous[key])).toFixed(1));
+}
+
+function formatDelta(delta, unit = "p.e.") {
+  if (!Number.isFinite(Number(delta))) return null;
+  const sign = delta > 0 ? "+" : "";
+  return `${sign}${compactNumber(delta)} ${unit}`;
+}
+
+function AbsenceMiniKpi({ label, value, count, total, delta }) {
+  return (
+    <div className="absence-mini-kpi">
+      <span>{label}</span>
+      <strong>{formatPct(value)}</strong>
+      {count !== undefined && <small>{formatCount(count)}{total ? ` av ${formatCount(total)}` : ""} elever</small>}
+      {delta !== null && delta !== undefined && <em className={delta > 0 ? "delta-bad" : delta < 0 ? "delta-good" : ""}>{formatDelta(delta)}</em>}
+    </div>
+  );
+}
+
+function buildAbsenceInsight(latest, previous) {
+  if (!latest) return "";
+  const parts = [];
+  const over15Delta = getDelta(latest, previous, "over15");
+  const over30Delta = getDelta(latest, previous, "over30");
+  const unauthorisedDelta = getDelta(latest, previous, "unauthorisedOver5");
+  if (Number.isFinite(over15Delta)) {
+    parts.push(over15Delta < -0.2 ? "Riskfrånvaron över 15% minskar jämfört med föregående läsår" : over15Delta > 0.2 ? "Riskfrånvaron över 15% ökar jämfört med föregående läsår" : "Riskfrånvaron över 15% är i stort sett oförändrad");
+  }
+  if (Number.isFinite(unauthorisedDelta) && unauthorisedDelta > 0.2) parts.push("ogiltig frånvaro över 5% ökar");
+  if (Number.isFinite(over30Delta) && latest.over30 >= 3) parts.push("allvarlig frånvaro över 30% behöver följas nära");
+  return parts.length ? `${parts.join(", ")}.` : "Följ utvecklingen över tid och jämför särskilt riskfrånvaro med kommunens nivå.";
+}
+
+function StudentAbsenceRiskCard({ metric, data, entityTitle }) {
+  const latest = [...data].reverse().find((x) => Number.isFinite(Number(x.value)));
+  if (!latest) {
+    return (
+      <Card className="metric-card absence-risk-card">
+        <CardContent className="metric-content">
+          <div className="metric-heading">
+            <div>
+              <h3>{metric.order}. {metric.title} (%)</h3>
+              <p>{metric.source}</p>
+            </div>
+            <span>Lokal</span>
+          </div>
+          <div className="empty-chart">Frånvarodata saknas i lokal komplettering</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const previous = [...data].reverse().find((x) => x.year < latest.year && Number.isFinite(Number(x.value)));
+  const chartData = data.map((item) => ({
+    ...item,
+    ar: formatMetricYear(item.year, metric),
+  }));
+  const comparisonRows = entityTitle === MUNICIPALITY_NAME ? getLatestAbsenceSchoolRows() : getLatestAbsenceGradeRows(entityTitle);
+  const comparisonTitle = entityTitle === MUNICIPALITY_NAME ? "Jämförelse mellan skolor" : "Årskurser på skolan";
+  const isMunicipality = entityTitle === MUNICIPALITY_NAME;
+  const maxOver15 = Math.max(...comparisonRows.map((row) => Number(row.over15)).filter(Number.isFinite));
+  const maxOver30 = Math.max(...comparisonRows.map((row) => Number(row.over30)).filter(Number.isFinite));
+  const maxUnauthorised = Math.max(...comparisonRows.map((row) => Number(row.unauthorisedOver5)).filter(Number.isFinite));
+
+  return (
+    <Card className="metric-card absence-risk-card">
+      <CardContent className="metric-content">
+        <div className="metric-heading">
+          <div>
+            <h3>{metric.order}. {metric.title} (%)</h3>
+            {metric.description && <p className="metric-description">{metric.description}</p>}
+            <p>{metric.source}</p>
+          </div>
+          <span>Lokal</span>
+        </div>
+
+        <div className="absence-summary">
+          <AbsenceMiniKpi label="Total frånvaro" value={latest.totalAbsence} delta={getDelta(latest, previous, "totalAbsence")} />
+          <AbsenceMiniKpi label="Över 15%" value={latest.over15} count={latest.over15Count} total={latest.studentCount} delta={getDelta(latest, previous, "over15")} />
+          <AbsenceMiniKpi label="Över 30%" value={latest.over30} count={latest.over30Count} total={latest.studentCount} delta={getDelta(latest, previous, "over30")} />
+          <AbsenceMiniKpi label="Ogiltig över 5%" value={latest.unauthorisedOver5} count={latest.unauthorisedOver5Count} total={latest.studentCount} delta={getDelta(latest, previous, "unauthorisedOver5")} />
+        </div>
+
+        <div className="absence-insight">{buildAbsenceInsight(latest, previous)}</div>
+
+        <ResponsiveContainer width="100%" height={240}>
+          <LineChart data={chartData} margin={{ top: 12, right: 18, left: 8, bottom: 0 }}>
+            <CartesianGrid vertical={false} stroke="#d9d9d9" />
+            <XAxis dataKey="ar" tick={{ fontSize: 12, fill: "#000", fontWeight: 800 }} tickLine={false} axisLine={false} />
+            <YAxis tick={{ fontSize: 12, fill: "#000", fontWeight: 800 }} tickFormatter={(value) => `${value}%`} domain={[0, "auto"]} tickLine={false} axisLine={false} />
+            <Tooltip formatter={(value, name) => [`${compactNumber(value)}%`, name]} />
+            <Legend wrapperStyle={{ fontSize: 12, fontWeight: 800 }} iconType="line" />
+            <Line type="monotone" dataKey="totalAbsence" name="Total frånvaro" stroke="#006fae" strokeWidth={2.2} dot={{ r: 3 }} connectNulls />
+            <Line type="monotone" dataKey="over15" name="Över 15%" stroke="#d98512" strokeWidth={2} dot={{ r: 3 }} connectNulls />
+            <Line type="monotone" dataKey="over30" name="Över 30%" stroke="#bd4f5b" strokeWidth={2} dot={{ r: 3 }} connectNulls />
+            <Line type="monotone" dataKey="unauthorisedOver5" name="Ogiltig över 5%" stroke="#008c7a" strokeWidth={2} dot={{ r: 3 }} connectNulls />
+            {data.some((item) => Number.isFinite(Number(item.municipalityValue))) && entityTitle !== MUNICIPALITY_NAME && (
+              <Line type="monotone" dataKey="municipalityValue" name="Kommun total" stroke="#0f172a" strokeWidth={1.8} strokeDasharray="5 5" dot={{ r: 2 }} connectNulls />
+            )}
+          </LineChart>
+        </ResponsiveContainer>
+
+        {comparisonRows.length > 0 && (
+          <div className="absence-table-wrap">
+            <h4>{comparisonTitle}</h4>
+            <table className="absence-table">
+              <thead>
+                <tr>
+                  <th>{isMunicipality ? "Skola" : "Åk"}</th>
+                  <th>Elever</th>
+                  <th>Total</th>
+                  <th>Över 15%</th>
+                  <th>Över 30%</th>
+                  <th>Ogiltig &gt;5%</th>
+                  <th>Risk</th>
+                </tr>
+              </thead>
+              <tbody>
+                {comparisonRows.map((row) => (
+                  <tr key={`${row.schoolYear}-${row.schoolName || row.grade}`}>
+                    <td>{isMunicipality ? row.schoolName : row.grade}</td>
+                    <td>{formatCount(row.studentCount)}</td>
+                    <td>{formatPct(row.totalAbsence)}</td>
+                    <td className={row.over15 === maxOver15 ? "table-flag" : ""}>{formatPct(row.over15)}</td>
+                    <td className={row.over30 === maxOver30 ? "table-flag" : ""}>{formatPct(row.over30)}</td>
+                    <td className={row.unauthorisedOver5 === maxUnauthorised ? "table-flag" : ""}>{formatPct(row.unauthorisedOver5)}</td>
+                    <td><span className={`risk-pill risk-${row.riskLevel || "unknown"}`}>{riskLabel(row.riskLevel)}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+const RELATED_ABSENCE_METRICS = {
+  "F-6": ["staffAbsence", "studentsPerTeacher", "schoolSurvey5", "nationalTests3", "knowledge6"],
+  "7-9": ["staffAbsence", "studentsPerTeacher", "schoolSurvey8", "meritValue", "gymEligibility", "salsaMerit"],
+  "F-9": ["staffAbsence", "studentsPerTeacher", "schoolSurvey8", "nationalTests3", "meritValue", "gymEligibility"],
+};
+
+const RELATED_ABSENCE_REASON = {
+  staffAbsence: "Kontinuitet och bemanning",
+  studentsPerTeacher: "Organisations- och resurskontext",
+  schoolSurvey5: "Trygghet, stöd och studiero",
+  schoolSurvey8: "Trygghet, stöd och studiero",
+  nationalTests3: "Tidiga kunskapsresultat",
+  knowledge6: "Måluppfyllelse i mellanstadiet",
+  meritValue: "Resultat vid läsårets slut",
+  gymEligibility: "Behörighet och övergång",
+  salsaMerit: "Resultat i relation till elevsammansättning",
+};
+
+function latestSeriesItem(items = [], metric) {
+  if (!items.length) return null;
+  if (!metric.series) return [...items].reverse().find((item) => Number.isFinite(Number(item.value))) || null;
+  return [...items].reverse().find((item) => metric.series.some((series) => Number.isFinite(Number(item[series.key])))) || null;
+}
+
+function formatRelatedValue(item, metric) {
+  if (!item) return "–";
+  if (!metric.series) return `${compactNumber(item.value)} ${metric.unit}`;
+  const parts = metric.series
+    .filter((series) => Number.isFinite(Number(item[series.key])))
+    .slice(0, 2)
+    .map((series) => `${series.label}: ${compactNumber(item[series.key])}`);
+  return parts.length ? `${parts.join(" · ")} ${metric.unit}` : "–";
+}
+
+function RelatedAbsenceKpiCard({ selected, series }) {
+  if (selected.type !== "school") return null;
+  const stage = getEntityStage(selected);
+  const metricKeys = RELATED_ABSENCE_METRICS[stage] || RELATED_ABSENCE_METRICS["F-6"];
+  const items = metricKeys
+    .map((key) => {
+      const metric = KPI_CATALOG.find((candidate) => candidate.key === key);
+      if (!metric || !isMetricVisibleForEntity(metric, selected)) return null;
+      const latest = latestSeriesItem(series[key] || [], metric);
+      return { metric, latest };
+    })
+    .filter(Boolean);
+  if (!items.length) return null;
+
+  return (
+    <Card className="metric-card related-kpi-card">
+      <CardContent className="metric-content">
+        <div className="metric-heading">
+          <div>
+            <h3>Analysera tillsammans med</h3>
+            <p className="metric-description">Frånvaro är lokal läsårsdata. Angränsande Kolada- och lokala mått visas med sina egna rapporteringsperioder och ska användas som analyskontext.</p>
+          </div>
+          <span>Analysstöd</span>
+        </div>
+        <div className="related-kpi-grid">
+          {items.map(({ metric, latest }) => (
+            <div className="related-kpi-item" key={metric.key}>
+              <span>{getMetricPeriodNote(metric, latest?.year)}</span>
+              <strong>{metric.title}</strong>
+              <p>{formatRelatedValue(latest, metric)}</p>
+              <small>{RELATED_ABSENCE_REASON[metric.key] || "Angränsande kvalitetsmått"}</small>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function getAbsenceDialogueItems(selected, absenceSeries = []) {
+  if (selected.type !== "school") return [];
+  const latest = [...absenceSeries].reverse().find((item) => Number.isFinite(Number(item.value)));
+  const gradeRows = getLatestAbsenceGradeRows(selected.title);
+  const highestOver15 = [...gradeRows].sort((a, b) => Number(b.over15 || 0) - Number(a.over15 || 0))[0];
+  const highestUnauthorised = [...gradeRows].sort((a, b) => Number(b.unauthorisedOver5 || 0) - Number(a.unauthorisedOver5 || 0))[0];
+  const items = [
+    highestOver15 ? `Börja analysen i årskurs ${highestOver15.grade}: högst andel riskfrånvaro över 15% (${formatPct(highestOver15.over15)}).` : "Identifiera vilken årskurs som driver riskfrånvaron.",
+    highestUnauthorised ? `Följ ogiltig frånvaro i årskurs ${highestUnauthorised.grade}: ${formatPct(highestUnauthorised.unauthorisedOver5)} över 5%.` : "Särskilj total frånvaro från ogiltig frånvaro i analysen.",
+    latest?.municipalityValue ? `Jämför skolans totalfrånvaro (${formatPct(latest.totalAbsence)}) med kommunens nivå (${formatPct(latest.municipalityValue)}) för samma läsår.` : "Jämför skolans utveckling med kommunens läsårsbild där jämförbart värde finns.",
+    "Pröva om mönstret syns även i resultat, trygghet/studiero, personalfrånvaro eller resursmått innan åtgärder prioriteras.",
+  ];
+  return items;
+}
+
+function QualityDialogueCard({ selected, series }) {
+  if (selected.type !== "school") return null;
+  const items = getAbsenceDialogueItems(selected, series.studentAbsence || []);
+  return (
+    <Card className="quality-dialogue-card">
+      <CardContent className="metric-content">
+        <div className="metric-heading">
+          <div>
+            <h3>Att ta med till kvalitetsdialogen</h3>
+            <p className="metric-description">Frågor och signaler för läsårsbokslut, analys och prioriteringar inför nästa läsår.</p>
+          </div>
+          <span>Skolenhet</span>
+        </div>
+        <div className="dialogue-list">
+          {items.map((item) => <p key={item}>{item}</p>)}
+        </div>
       </CardContent>
     </Card>
   );
@@ -952,7 +1362,10 @@ function SavsjoQualityDashboard() {
                 </div>
                 <section className="metric-grid">
                   {metrics.map((metric) => (
-                    <MetricCard key={metric.key} metric={metric} data={series[metric.key] || mockSeries(selected.title, metric.key, metric.unit)} entityTitle={selected.title} />
+                    <React.Fragment key={metric.key}>
+                      <MetricCard metric={metric} data={getMetricRenderData(metric, selected, series)} entityTitle={selected.title} />
+                      {metric.key === "studentAbsence" && <RelatedAbsenceKpiCard selected={selected} series={series} />}
+                    </React.Fragment>
                   ))}
                   {showSalsaInSection && (
                     <SalsaAnalysisCard
@@ -965,6 +1378,8 @@ function SavsjoQualityDashboard() {
               </React.Fragment>
             );
           })}
+
+          <QualityDialogueCard selected={selected} series={series} />
 
           <footer className="report-footer">
             <p>Dataprinciper</p>
