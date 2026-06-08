@@ -13,7 +13,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { Download, FileText, RefreshCw, School, Building2, Database, AlertTriangle } from "lucide-react";
+import { Download, FileText, RefreshCw, School, Building2, Database, AlertTriangle, Info } from "lucide-react";
 import "./styles.css";
 import staffAbsenceData from "./data/sjukfranvaro_personal.json";
 import studentAbsenceData from "./data/franvaro_elever.json";
@@ -806,9 +806,9 @@ function MetricChart({ metric, data, entityTitle }) {
   );
 }
 
-function MetricCard({ metric, data, entityTitle }) {
+function MetricCard({ metric, data, entityTitle, onAboutKpi }) {
   if (metric.key === "studentAbsence") {
-    return <StudentAbsenceRiskCard metric={metric} data={data} entityTitle={entityTitle} />;
+    return <StudentAbsenceRiskCard metric={metric} data={data} entityTitle={entityTitle} onAboutKpi={onAboutKpi} />;
   }
   const latest = metric.series ? null : [...data].reverse().find((x) => Number.isFinite(Number(x.value)));
   const localFlag = metric.localNeeded === true ? "Lokal" : metric.localNeeded === "partial" ? "Delvis lokal" : "Kolada";
@@ -821,7 +821,10 @@ function MetricCard({ metric, data, entityTitle }) {
             {metric.description && <p className="metric-description">{metric.description}</p>}
             <p>{metric.source}</p>
           </div>
-          <span>{localFlag}</span>
+          <div className="metric-actions">
+            <button type="button" className="icon-btn" onClick={() => onAboutKpi?.(metric.key)} title="Visa KPI-definition"><Info /></button>
+            <span>{localFlag}</span>
+          </div>
         </div>
         {!metric.series && <div className="metric-value">{latest ? compactNumber(latest.value) : "–"}<small>{metric.unit}</small></div>}
         <MetricChart metric={metric} data={data} entityTitle={entityTitle} />
@@ -935,7 +938,7 @@ function buildAbsenceInsight(latest, previous) {
   return parts.length ? `${parts.join(", ")}.` : "Följ utvecklingen över tid och jämför särskilt riskfrånvaro med kommunens nivå.";
 }
 
-function StudentAbsenceRiskCard({ metric, data, entityTitle }) {
+function StudentAbsenceRiskCard({ metric, data, entityTitle, onAboutKpi }) {
   const latest = [...data].reverse().find((x) => Number.isFinite(Number(x.value)));
   if (!latest) {
     return (
@@ -946,7 +949,10 @@ function StudentAbsenceRiskCard({ metric, data, entityTitle }) {
               <h3>{metric.order}. {metric.title} (%)</h3>
               <p>{metric.source}</p>
             </div>
-            <span>Lokal</span>
+            <div className="metric-actions">
+              <button type="button" className="icon-btn" onClick={() => onAboutKpi?.(metric.key)} title="Visa KPI-definition"><Info /></button>
+              <span>Lokal</span>
+            </div>
           </div>
           <div className="empty-chart">Frånvarodata saknas i lokal komplettering</div>
         </CardContent>
@@ -975,7 +981,10 @@ function StudentAbsenceRiskCard({ metric, data, entityTitle }) {
             {metric.description && <p className="metric-description">{metric.description}</p>}
             <p>{metric.source}</p>
           </div>
-          <span>Lokal</span>
+          <div className="metric-actions">
+            <button type="button" className="icon-btn" onClick={() => onAboutKpi?.(metric.key)} title="Visa KPI-definition"><Info /></button>
+            <span>Lokal</span>
+          </div>
         </div>
 
         <div className="absence-summary">
@@ -1652,6 +1661,118 @@ function SourcesPanel({ metrics }) {
   );
 }
 
+function getKpiAnchor(metric) {
+  return `kpi-${metric.key}`;
+}
+
+function getKpiLevels(metric) {
+  if (metric.entityTypes?.length) {
+    return metric.entityTypes.map((type) => type === "municipality" ? "Kommunnivå" : "Skolenhetsnivå");
+  }
+  if (metric.dataLevel === "municipality") return ["Kommunnivå"];
+  return ["Kommunnivå", "Skolenhetsnivå"];
+}
+
+function getKpiPeriodLabel(metric) {
+  if (metric.key === "studentAbsence") return "Läsår";
+  if (metric.period === "calendarYear") return "Kalenderår";
+  if (metric.period === "surveyYear") return "Enkätår";
+  return "Rapporterat år/läsår";
+}
+
+function getKpiComparisonLabel(metric) {
+  const parts = [];
+  if (metric.compareMunicipality) parts.push("kommunjämförelse på skolenhet");
+  if (EXTERNAL_COMPARISON_METRICS.has(metric.key)) parts.push("riket och liknande kommuner där data finns");
+  if (!parts.length) return "Ingen standardjämförelse utöver vald enhet";
+  return parts.join(", ");
+}
+
+function getKpiLimitations(metric) {
+  const parts = [];
+  if (metric.dataLevel === "municipality") parts.push("Visas endast på kommunnivå eftersom måttet avser huvudman/kommun.");
+  if (metric.entityTypes?.includes("municipality") && !metric.entityTypes.includes("school")) parts.push("Visas inte på skolenhet.");
+  if (metric.localNeeded === true) parts.push("Bygger på lokal import och behöver kvalitetssäkras vid uppdatering.");
+  if (metric.localNeeded === "partial") parts.push("Kan behöva lokal komplettering eller manuell validering.");
+  if (metric.stage?.length) parts.push(`Visas för ${metric.stage.join(", ")}.`);
+  return parts.length ? parts.join(" ") : "Inga särskilda begränsningar utöver datatillgång i Kolada/lokal källa.";
+}
+
+function getKpiDefinition(metric) {
+  if (metric.description) return metric.description;
+  if (metric.series?.length) return `Måttet består av delserierna ${metric.series.map((series) => series.label).join(", ")}.`;
+  return "Definition hämtas från angiven källa och kompletteras i katalogen vid behov.";
+}
+
+function KpiAboutCard({ metric, highlight }) {
+  const ids = [...(metric.kpiIds || []), ...(metric.schoolKpiIds || []), ...(metric.series || []).flatMap((series) => series.kpiIds || [])];
+  const uniqueIds = [...new Set(ids)];
+  const localFlag = metric.localNeeded === true ? "Lokal" : metric.localNeeded === "partial" ? "Delvis lokal" : "Kolada";
+  return (
+    <article id={getKpiAnchor(metric)} className={`kpi-about-card ${highlight === metric.key ? "highlight" : ""}`}>
+      <div className="kpi-about-head">
+        <div>
+          <h3>{metric.order}. {metric.title}</h3>
+          <p>{getKpiDefinition(metric)}</p>
+        </div>
+        <span>{localFlag}</span>
+      </div>
+      <dl className="kpi-meta-grid">
+        <div><dt>Nivå</dt><dd>{getKpiLevels(metric).join(", ")}</dd></div>
+        <div><dt>Period</dt><dd>{getKpiPeriodLabel(metric)}</dd></div>
+        <div><dt>Enhet</dt><dd>{metric.unit}</dd></div>
+        <div><dt>Källa</dt><dd>{metric.source}</dd></div>
+        <div><dt>Kolada-id</dt><dd>{uniqueIds.length ? uniqueIds.join(", ") : "Ej Kolada"}</dd></div>
+        <div><dt>Jämförelser</dt><dd>{getKpiComparisonLabel(metric)}</dd></div>
+      </dl>
+      <div className="kpi-about-note">
+        <strong>Tolkning och begränsning</strong>
+        <p>{getKpiLimitations(metric)}</p>
+      </div>
+    </article>
+  );
+}
+
+function KpiAboutPage({ highlight }) {
+  const grouped = new Map(SECTION_DEFINITIONS.map((section) => [section.key, []]));
+  for (const metric of KPI_CATALOG) {
+    const section = getMetricSection(metric);
+    grouped.set(section, [...(grouped.get(section) || []), metric]);
+  }
+  return (
+    <motion.main initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="report-page kpi-about-page">
+      <header className="report-header">
+        <div className="report-header-grid">
+          <div>
+            <p className="level-label">Bilaga</p>
+            <h2>Om KPI</h2>
+            <p>Definitioner, nivåer, datakällor och begränsningar för KPI:er som används i rapporten. Kolada-mått dokumenteras med KPI-id och lokala mått med källsystem eller importkälla.</p>
+          </div>
+          <div className="index-box">
+            <p>Antal KPI</p>
+            <strong>{KPI_CATALOG.length}</strong>
+          </div>
+        </div>
+      </header>
+
+      {SECTION_DEFINITIONS.map((section) => {
+        const metrics = grouped.get(section.key) || [];
+        if (!metrics.length) return null;
+        return (
+          <section className="kpi-about-section" key={section.key}>
+            <div className="section-divider">
+              <div /><p>{section.title}</p><div />
+            </div>
+            <div className="kpi-about-list">
+              {metrics.map((metric) => <KpiAboutCard key={metric.key} metric={metric} highlight={highlight} />)}
+            </div>
+          </section>
+        );
+      })}
+    </motion.main>
+  );
+}
+
 function SavsjoQualityDashboard() {
   const [schools, setSchools] = useState(SCHOOL_FALLBACK.map((s) => ({ ...s, type: "school" })));
   const [selected, setSelected] = useState({ type: "municipality", id: MUNICIPALITY_ID, title: MUNICIPALITY_NAME, grades: "Huvudman" });
@@ -1659,9 +1780,12 @@ function SavsjoQualityDashboard() {
   const [series, setSeries] = useState({});
   const [signalRows, setSignalRows] = useState([]);
   const [signalLoading, setSignalLoading] = useState(false);
+  const [includeKpiAppendix, setIncludeKpiAppendix] = useState(false);
+  const [highlightKpi, setHighlightKpi] = useState("");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("Inte synkad ännu");
   const pageRef = useRef(null);
+  const kpiAppendixRef = useRef(null);
   const syncRunRef = useRef(0);
 
   const entities = useMemo(() => [{ type: "municipality", id: MUNICIPALITY_ID, title: MUNICIPALITY_NAME, grades: "Huvudman", stage: "F-9" }, ...schools], [schools]);
@@ -1714,30 +1838,91 @@ function SavsjoQualityDashboard() {
   }
 
   useEffect(() => { sync(); }, [selected.title]);
+  useEffect(() => {
+    if (activeView !== "aboutKpi" || !highlightKpi) return;
+    window.requestAnimationFrame(() => {
+      document.getElementById(`kpi-${highlightKpi}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, [activeView, highlightKpi]);
+
+  function showAboutKpi(metricKey = "") {
+    setHighlightKpi(metricKey);
+    setActiveView("aboutKpi");
+  }
+
+  async function addElementToPdf(pdf, html2canvas, element, addPageFirst = false) {
+    if (!element) return;
+    const canvas = await html2canvas(element, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
+    const imgData = canvas.toDataURL("image/png");
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = pageWidth;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    let heightLeft = imgHeight;
+    let position = 0;
+    if (addPageFirst) pdf.addPage();
+    pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+    }
+  }
+
+  async function addFlowElementsToPdf(pdf, html2canvas, root, addPageFirst = false) {
+    if (!root) return;
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const margin = 8;
+    const gap = 4;
+    const imgWidth = pageWidth - margin * 2;
+    let y = margin;
+    if (addPageFirst) pdf.addPage();
+    const elements = [
+      root.querySelector(".report-header"),
+      ...root.querySelectorAll(".kpi-about-section .section-divider, .kpi-about-card"),
+    ].filter(Boolean);
+
+    for (const item of elements) {
+      const canvas = await html2canvas(item, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
+      const imgData = canvas.toDataURL("image/png");
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      if (y > margin && y + imgHeight > pageHeight - margin) {
+        pdf.addPage();
+        y = margin;
+      }
+      if (imgHeight > pageHeight - margin * 2) {
+        if (y > margin) {
+          pdf.addPage();
+          y = margin;
+        }
+        await addElementToPdf(pdf, html2canvas, item, false);
+        pdf.addPage();
+        y = margin;
+        continue;
+      }
+      pdf.addImage(imgData, "PNG", margin, y, imgWidth, imgHeight);
+      y += imgHeight + gap;
+    }
+  }
 
   async function exportPdf() {
-    const element = pageRef.current;
+    const element = activeView === "aboutKpi" ? kpiAppendixRef.current : pageRef.current;
     if (!element) return;
     setStatus("Skapar PDF ...");
     try {
       const html2canvas = (await import("html2canvas")).default;
       const { jsPDF } = await import("jspdf");
-      const canvas = await html2canvas(element, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
-      const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF("p", "mm", "a4");
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pageWidth;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
-      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+      if (activeView === "aboutKpi") {
+        await addFlowElementsToPdf(pdf, html2canvas, element);
+      } else {
+        await addElementToPdf(pdf, html2canvas, element);
+      }
+      if (includeKpiAppendix && activeView !== "aboutKpi") {
+        await addFlowElementsToPdf(pdf, html2canvas, kpiAppendixRef.current, true);
       }
       pdf.save(`${selected.title.replaceAll(" ", "-").toLowerCase()}-kvalitet-resultat.pdf`);
       setStatus("PDF exporterad.");
@@ -1765,9 +1950,14 @@ function SavsjoQualityDashboard() {
               <Button onClick={exportPdf} variant="outline"><Download />Exportera PDF</Button>
             </div>
           </div>
+          <label className="appendix-toggle">
+            <input type="checkbox" checked={includeKpiAppendix} onChange={(event) => setIncludeKpiAppendix(event.target.checked)} />
+            Inkludera KPI-bilaga i PDF
+          </label>
           <div className="view-tabs">
             <button onClick={() => setActiveView("quality")} className={activeView === "quality" ? "active" : ""}><School />Kvalitet per enhet</button>
             <button onClick={() => setActiveView("signals")} className={activeView === "signals" ? "active" : ""}><Building2 />Signalmatris huvudman</button>
+            <button onClick={() => showAboutKpi()} className={activeView === "aboutKpi" ? "active" : ""}><Info />Om KPI</button>
           </div>
           {activeView === "quality" && (
             <div className="entity-tabs">
@@ -1783,8 +1973,14 @@ function SavsjoQualityDashboard() {
 
         {activeView === "quality" && <SourcesPanel metrics={visibleMetrics} />}
 
-        {activeView === "signals" ? (
-          <SignalMatrixPage rows={signalRows} loading={signalLoading} />
+        {activeView === "aboutKpi" ? (
+          <div ref={kpiAppendixRef}>
+            <KpiAboutPage highlight={highlightKpi} />
+          </div>
+        ) : activeView === "signals" ? (
+          <div ref={pageRef}>
+            <SignalMatrixPage rows={signalRows} loading={signalLoading} />
+          </div>
         ) : (
         <motion.main ref={pageRef} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="report-page">
           <header className="report-header">
@@ -1813,7 +2009,7 @@ function SavsjoQualityDashboard() {
                 <section className="metric-grid">
                   {metrics.map((metric) => (
                     <React.Fragment key={`${selected.type}-${selected.id || selected.title}-${metric.key}`}>
-                      <MetricCard metric={metric} data={getMetricRenderData(metric, selected, series)} entityTitle={selected.title} />
+                      <MetricCard metric={metric} data={getMetricRenderData(metric, selected, series)} entityTitle={selected.title} onAboutKpi={showAboutKpi} />
                       {metric.key === "studentAbsence" && <RelatedAbsenceKpiCard selected={selected} series={series} />}
                     </React.Fragment>
                   ))}
@@ -1836,6 +2032,11 @@ function SavsjoQualityDashboard() {
             <span>Kolada prioriteras för officiella nyckeltal. Lokal komplettering används för ekonomi, personalfrånvaro, elevfrånvaro, trivsel och de resultatmått där skolenhetsdata inte finns eller behöver brytas ned. Värden med färre än fem elever/personer ska döljas före publicering.</span>
           </footer>
         </motion.main>
+        )}
+        {activeView !== "aboutKpi" && includeKpiAppendix && (
+          <div className="pdf-appendix-source" ref={kpiAppendixRef}>
+            <KpiAboutPage highlight={highlightKpi} />
+          </div>
         )}
       </div>
     </div>
