@@ -285,7 +285,6 @@ const LOCAL_SUPPLEMENT = {
     "Stockaryds skola": { socioEconomicIndex: null, adaptedStudents: [], staffAbsence: [], teacherPedagogicalDegree: [], studentAbsence: [], parentHigherEducation: [], wellbeing: [], nationalTests3: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
     "Vallsjöskolan": { socioEconomicIndex: null, adaptedStudents: [], staffAbsence: [], teacherPedagogicalDegree: [], studentAbsence: [], parentHigherEducation: [], wellbeing: [], nationalTests3: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
     "Vrigstad skola": { socioEconomicIndex: null, adaptedStudents: [], staffAbsence: [], teacherPedagogicalDegree: [], studentAbsence: [], parentHigherEducation: [], wellbeing: [], nationalTests3: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
-    "Sävsjö kristna skola": { socioEconomicIndex: null, adaptedStudents: [], staffAbsence: [], teacherPedagogicalDegree: [], studentAbsence: [], parentHigherEducation: [], wellbeing: [], nationalTests3: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
     "Hofgårdsskolan": { socioEconomicIndex: null, adaptedStudents: [], staffAbsence: [], teacherPedagogicalDegree: [], studentAbsence: [], parentHigherEducation: [], wellbeing: [], nationalTests3: [], nationalTests6: [], nationalTests9: [], knowledge6: [], knowledge9: [], schoolSurvey: [] },
   },
 };
