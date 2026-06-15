@@ -20,6 +20,7 @@ import studentAbsenceData from "./data/franvaro_elever.json";
 import studentAbsenceKpiData from "./data/kpi_franvaro_alla_lasar.json";
 import nationalTests3Data from "./data/ak3_np.json";
 import budgetDeviationData from "./data/budgetavvikelse.json";
+import npGapLocalData from "./data/np_gap_local.json";
 
 function Card({ className = "", children }) {
   return <div className={`card ${className}`}>{children}</div>;
@@ -111,6 +112,20 @@ const METRIC_SECTIONS = {
 const CURRENT_YEAR = new Date().getFullYear();
 const YEARS = Array.from({ length: 5 }, (_, index) => CURRENT_YEAR - 4 + index);
 const koladaCache = {};
+
+const NP_GAP_SUBJECTS_9 = [
+  { key: "svenska", label: "Svenska", higherKpi: "N15570", lowerKpi: "N15569", color: "#14b8a6" },
+  { key: "matematik", label: "Matematik", higherKpi: "N15572", lowerKpi: "N15571", color: "#f97316" },
+  { key: "engelska", label: "Engelska", higherKpi: "N15574", lowerKpi: "N15573", color: "#0ea5e9" },
+  { key: "sva", label: "Svenska som andrasprÃ¥k", higherKpi: "N15576", lowerKpi: "N15575", color: "#8b5cf6" },
+];
+
+const NP_GAP_SUBJECTS_6 = [
+  { key: "svenska", label: "Svenska" },
+  { key: "matematik", label: "Matematik" },
+  { key: "engelska", label: "Engelska" },
+  { key: "sva", label: "Svenska som andrasprÃ¥k" },
+];
 
 const MUNICIPALITIES = [
   { code: "0680", name: "Jönköping" },
@@ -300,7 +315,7 @@ function mockSeries(entityName, key, unit) {
     const lower = unit === "%" ? 55 : unit === "poäng" ? 185 : unit === "index 0-10" ? 4 : 8;
     const upper = unit === "%" ? 95 : unit === "poäng" ? 245 : unit === "index 0-10" ? 8.8 : 380;
     const decimals = unit === "%" || unit === "index 0-10" ? 1 : 0;
-    return { year, value: seededValue(`${entityName}-${key}`, year, lower, upper, decimals), source: "Exempeldata" };
+    return { year, value: seededValue(`${entityName}-${key}`, year, lower, upper, decimals), source: "Exempeldata", isMock: true };
   });
 }
 
@@ -450,6 +465,113 @@ async function loadKoladaMultiSeries(metric, entity) {
     }
   }
   return Array.from(mergedByYear.values()).sort((a, b) => a.year - b.year);
+}
+
+async function loadNpGapKoladaRows(entity) {
+  const rowsByKey = new Map();
+  const entityForKolada = entity.type === "municipality"
+    ? { type: "municipality", id: MUNICIPALITY_ID, title: MUNICIPALITY_NAME }
+    : entity;
+  for (const subject of NP_GAP_SUBJECTS_9) {
+    const [higherValues, lowerValues] = await Promise.all([
+      loadKoladaSeries({ key: `npGap9Higher${subject.key}`, kpiIds: [subject.higherKpi] }, entityForKolada),
+      loadKoladaSeries({ key: `npGap9Lower${subject.key}`, kpiIds: [subject.lowerKpi] }, entityForKolada),
+    ]);
+    for (const item of higherValues) {
+      const key = `9-${subject.key}-${item.year}`;
+      rowsByKey.set(key, {
+        ...(rowsByKey.get(key) || {}),
+        year: item.year,
+        schoolYear: formatSchoolYear(item.year),
+        grade: 9,
+        subject: subject.key,
+        subjectLabel: subject.label,
+        higher: item.value,
+        higherKpi: subject.higherKpi,
+        source: "Kolada",
+        status: "Officiell",
+      });
+    }
+    for (const item of lowerValues) {
+      const key = `9-${subject.key}-${item.year}`;
+      rowsByKey.set(key, {
+        ...(rowsByKey.get(key) || {}),
+        year: item.year,
+        schoolYear: formatSchoolYear(item.year),
+        grade: 9,
+        subject: subject.key,
+        subjectLabel: subject.label,
+        lower: item.value,
+        lowerKpi: subject.lowerKpi,
+        source: "Kolada",
+        status: "Officiell",
+      });
+    }
+  }
+  return Array.from(rowsByKey.values()).map(enrichNpGapRow).sort(sortNpGapRows);
+}
+
+function normalizeNpGapLocalRow(row, entity) {
+  const subject = [...NP_GAP_SUBJECTS_9, ...NP_GAP_SUBJECTS_6].find((item) => item.key === row.subject || item.label === row.subject);
+  return enrichNpGapRow({
+    ...row,
+    year: Number(row.year),
+    grade: Number(row.grade),
+    subject: subject?.key || row.subject,
+    subjectLabel: subject?.label || row.subject,
+    higher: row.higher ?? row.higherThanTestGrade,
+    lower: row.lower ?? row.lowerThanTestGrade,
+    source: row.source || "Lokal preliminÃ¤r komplettering",
+    status: row.status || "PreliminÃ¤r",
+    entityTitle: row.school || row.entityTitle || entity.title,
+  });
+}
+
+function getNpGapLocalRows(entity) {
+  const values = Array.isArray(npGapLocalData.values) ? npGapLocalData.values : [];
+  return values
+    .filter((row) => {
+      if (entity.type === "municipality") return row.level === "municipality" || !row.school;
+      return row.school === entity.title || row.entityTitle === entity.title;
+    })
+    .map((row) => normalizeNpGapLocalRow(row, entity))
+    .filter((row) => Number.isFinite(row.year) && Number.isFinite(row.grade))
+    .sort(sortNpGapRows);
+}
+
+function mergeNpGapRows(koladaRows, localRows) {
+  const byKey = new Map();
+  for (const row of koladaRows) byKey.set(`${row.grade}-${row.subject}-${row.year}`, row);
+  for (const row of localRows) {
+    const key = `${row.grade}-${row.subject}-${row.year}`;
+    const existing = byKey.get(key);
+    if (!existing) byKey.set(key, row);
+  }
+  return Array.from(byKey.values()).sort(sortNpGapRows);
+}
+
+async function loadNpGapRows(entity) {
+  const koladaRows = await loadNpGapKoladaRows(entity);
+  const localRows = getNpGapLocalRows(entity);
+  return mergeNpGapRows(koladaRows, localRows);
+}
+
+function enrichNpGapRow(row) {
+  const higher = Number(row.higher);
+  const lower = Number(row.lower);
+  const hasHigher = Number.isFinite(higher);
+  const hasLower = Number.isFinite(lower);
+  return {
+    ...row,
+    higher: hasHigher ? higher : undefined,
+    lower: hasLower ? lower : undefined,
+    net: hasHigher && hasLower ? Number((higher - lower).toFixed(1)) : undefined,
+    aligned: hasHigher && hasLower ? Number(Math.max(0, 100 - higher - lower).toFixed(1)) : undefined,
+  };
+}
+
+function sortNpGapRows(a, b) {
+  return (b.year || 0) - (a.year || 0) || (a.grade || 0) - (b.grade || 0) || String(a.subjectLabel || "").localeCompare(String(b.subjectLabel || ""), "sv");
 }
 
 async function loadSchools() {
@@ -811,7 +933,8 @@ function MetricCard({ metric, data, entityTitle, onAboutKpi }) {
     return <StudentAbsenceRiskCard metric={metric} data={data} entityTitle={entityTitle} onAboutKpi={onAboutKpi} />;
   }
   const latest = metric.series ? null : [...data].reverse().find((x) => Number.isFinite(Number(x.value)));
-  const localFlag = metric.localNeeded === true ? "Lokal" : metric.localNeeded === "partial" ? "Delvis lokal" : "Kolada";
+  const usesMockData = data.some((item) => item.isMock || item.source === "Exempeldata");
+  const localFlag = usesMockData ? "Exempeldata" : metric.localNeeded === true ? "Lokal" : metric.localNeeded === "partial" ? "Delvis lokal" : "Kolada";
   return (
     <Card className="metric-card">
       <CardContent className="metric-content">
@@ -823,9 +946,14 @@ function MetricCard({ metric, data, entityTitle, onAboutKpi }) {
           </div>
           <div className="metric-actions">
             <button type="button" className="icon-btn" onClick={() => onAboutKpi?.(metric.key)} title="Visa KPI-definition"><Info /></button>
-            <span>{localFlag}</span>
+            <span className={usesMockData ? "mock-source-pill" : ""}>{localFlag}</span>
           </div>
         </div>
+        {usesMockData && (
+          <div className="mock-data-warning">
+            Visar exempeldata eftersom faktisk Kolada-data eller lokal komplettering saknas. Siffrorna ska inte användas som beslutsunderlag.
+          </div>
+        )}
         {!metric.series && <div className="metric-value">{latest ? compactNumber(latest.value) : "–"}<small>{metric.unit}</small></div>}
         <MetricChart metric={metric} data={data} entityTitle={entityTitle} />
       </CardContent>
@@ -971,6 +1099,8 @@ function StudentAbsenceRiskCard({ metric, data, entityTitle, onAboutKpi }) {
   const maxOver15 = Math.max(...comparisonRows.map((row) => Number(row.over15)).filter(Number.isFinite));
   const maxOver30 = Math.max(...comparisonRows.map((row) => Number(row.over30)).filter(Number.isFinite));
   const maxUnauthorised = Math.max(...comparisonRows.map((row) => Number(row.unauthorisedOver5)).filter(Number.isFinite));
+  const flagOver30 = Number.isFinite(maxOver30) && maxOver30 > 0;
+  const flagUnauthorised = Number.isFinite(maxUnauthorised) && maxUnauthorised > 0;
 
   return (
     <Card className="metric-card absence-risk-card">
@@ -1035,8 +1165,8 @@ function StudentAbsenceRiskCard({ metric, data, entityTitle, onAboutKpi }) {
                     <td>{formatCount(row.studentCount)}</td>
                     <td>{formatPct(row.totalAbsence)}</td>
                     <td className={row.over15 === maxOver15 ? "table-flag" : ""}>{formatPct(row.over15)}</td>
-                    <td className={row.over30 === maxOver30 ? "table-flag" : ""}>{formatPct(row.over30)}</td>
-                    <td className={row.unauthorisedOver5 === maxUnauthorised ? "table-flag" : ""}>{formatPct(row.unauthorisedOver5)}</td>
+                    <td className={flagOver30 && row.over30 === maxOver30 ? "table-flag" : ""}>{formatPct(row.over30)}</td>
+                    <td className={flagUnauthorised && row.unauthorisedOver5 === maxUnauthorised ? "table-flag" : ""}>{formatPct(row.unauthorisedOver5)}</td>
                     <td><span className={`risk-pill risk-${row.riskLevel || "unknown"}`}>{riskLabel(row.riskLevel)}</span></td>
                   </tr>
                 ))}
@@ -1773,11 +1903,157 @@ function KpiAboutPage({ highlight }) {
   );
 }
 
+function NpGapPage({ selected, rows, loading }) {
+  const latestYear = rows.reduce((max, row) => Math.max(max, Number(row.year) || 0), 0);
+  const latestRows = rows.filter((row) => row.year === latestYear);
+  const summary = {
+    subjects: new Set(rows.map((row) => row.subject)).size,
+    kolada: rows.filter((row) => row.source === "Kolada").length,
+    local: rows.filter((row) => row.source !== "Kolada").length,
+    missingNet: rows.filter((row) => !Number.isFinite(Number(row.net))).length,
+  };
+  const chartData = latestRows.map((row) => ({
+    subject: row.subjectLabel,
+    "HÃ¶gre betyg": row.higher,
+    "LÃ¤gre betyg": row.lower,
+    Netto: row.net,
+    "Ã–verens": row.aligned,
+  }));
+  const grade6Rows = rows.filter((row) => row.grade === 6);
+
+  return (
+    <motion.main initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="report-page np-gap-page">
+      <header className="report-header">
+        <div className="report-header-grid">
+          <div>
+            <p className="level-label">{selected.type === "municipality" ? "HuvudmannanivÃ¥" : `${selected.grades} Â· ${getEntityStage(selected)}`}</p>
+            <h2>NP-gap: provbetyg och betyg</h2>
+            <p>Relation mellan nationella prov och betyg. Ã…k 9 hÃ¤mtas frÃ¥n Kolada processmÃ¥tt fÃ¶r kommunala skolor och skolenheter dÃ¤r OU-data finns. Innevarande lÃ¤sÃ¥r juni-augusti kan kompletteras lokalt tills Kolada uppdateras pÃ¥ hÃ¶sten.</p>
+          </div>
+          <div className="index-box">
+            <p>Senaste Ã¥r</p>
+            <strong>{latestYear || "â€“"}</strong>
+          </div>
+        </div>
+      </header>
+
+      <section className="np-summary">
+        <Card><CardContent><span>Ã„mnen</span><strong>{summary.subjects || "â€“"}</strong></CardContent></Card>
+        <Card><CardContent><span>Kolada-rader</span><strong>{summary.kolada}</strong></CardContent></Card>
+        <Card><CardContent><span>Lokala rader</span><strong>{summary.local}</strong></CardContent></Card>
+        <Card><CardContent><span>OfullstÃ¤ndiga netto</span><strong>{summary.missingNet}</strong></CardContent></Card>
+      </section>
+
+      <section className="np-grid">
+        <Card className="np-chart-card">
+          <CardContent>
+            <div className="metric-heading">
+              <div>
+                <h3>Senaste Ã¥rets avvikelse per Ã¤mne</h3>
+                <p>HÃ¶gre och lÃ¤gre betyg Ã¤n provbetyg visas som andel. Netto Ã¤r hÃ¶gre minus lÃ¤gre.</p>
+              </div>
+              <span className="np-source-pill">{latestRows.some((row) => row.source !== "Kolada") ? "Delvis lokal" : "Kolada"}</span>
+            </div>
+            {loading ? <div className="empty-chart">HÃ¤mtar NP-gap ...</div> : chartData.length ? (
+              <ResponsiveContainer width="100%" height={310}>
+                <BarChart data={chartData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+                  <CartesianGrid vertical={false} stroke="#d9d9d9" />
+                  <XAxis dataKey="subject" tick={{ fontSize: 12, fill: "#000", fontWeight: 800 }} tickLine={false} axisLine={false} />
+                  <YAxis tick={{ fontSize: 12, fill: "#000", fontWeight: 800 }} tickFormatter={(value) => `${value}%`} domain={[-20, 100]} tickLine={false} axisLine={false} />
+                  <Tooltip formatter={(value, name) => [`${compactNumber(value)}%`, name]} />
+                  <Legend wrapperStyle={{ fontSize: 12, fontWeight: 800 }} />
+                  <Bar dataKey="HÃ¶gre betyg" fill="#14b8a6" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="LÃ¤gre betyg" fill="#e11d48" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="Netto" fill="#0f172a" radius={[3, 3, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : <div className="empty-chart">Data saknas i Kolada eller lokal komplettering</div>}
+          </CardContent>
+        </Card>
+
+        <Card className="np-note-card">
+          <CardContent>
+            <h3>Hur sidan ska anvÃ¤ndas</h3>
+            <p><strong>Vad ser vi?</strong> Tabellen visar om betyg och provbetyg ligger i linje.</p>
+            <p><strong>Vad sticker ut?</strong> Positivt netto betyder stÃ¶rre andel hÃ¶gre betyg Ã¤n provbetyg. Negativt netto betyder stÃ¶rre andel lÃ¤gre betyg.</p>
+            <p><strong>Vad beror det pÃ¥?</strong> Koppla siffrorna till pedagogernas Forms-analys per skola och stadium.</p>
+            <p><strong>Vart ska vi?</strong> AnvÃ¤nd Ã¤mnen med tydliga avvikelser som uppfÃ¶ljningspunkter nÃ¤sta lÃ¤sÃ¥r.</p>
+          </CardContent>
+        </Card>
+      </section>
+
+      <Card className="np-table-card">
+        <CardContent>
+          <div className="metric-heading">
+            <div>
+              <h3>Ã…k 9 relation provbetyg och betyg</h3>
+              <p>Kolada: N15569-N15576. Per enhet visas dÃ¤r Kolada har skolenhetsdata, annars lokal komplettering om den finns.</p>
+            </div>
+          </div>
+          <NpGapTable rows={rows.filter((row) => row.grade === 9)} />
+        </CardContent>
+      </Card>
+
+      <Card className="np-table-card">
+        <CardContent>
+          <div className="metric-heading">
+            <div>
+              <h3>Ã…k 6 lokal komplettering</h3>
+              <p>Ã…k 6 behÃ¶ver lokal processdata med samma definition: hÃ¶gre eller lÃ¤gre betyg Ã¤n provbetyg.</p>
+            </div>
+          </div>
+          {grade6Rows.length ? <NpGapTable rows={grade6Rows} /> : <div className="empty-chart">Ingen lokal Ã¥k 6-komplettering inlagd Ã¤n.</div>}
+        </CardContent>
+      </Card>
+    </motion.main>
+  );
+}
+
+function NpGapTable({ rows }) {
+  if (!rows.length) return <div className="empty-chart">Data saknas i Kolada eller lokal komplettering</div>;
+  return (
+    <div className="np-table-wrap">
+      <table className="np-table">
+        <thead>
+          <tr>
+            <th>LÃ¤sÃ¥r</th>
+            <th>Ã…k</th>
+            <th>Ã„mne</th>
+            <th>HÃ¶gre</th>
+            <th>LÃ¤gre</th>
+            <th>Netto</th>
+            <th>Ã–verens</th>
+            <th>KÃ¤lla</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={`${row.grade}-${row.subject}-${row.year}-${row.source}`}>
+              <td>{row.schoolYear || formatSchoolYear(row.year)}</td>
+              <td>{row.grade}</td>
+              <td>{row.subjectLabel}</td>
+              <td>{formatPct(row.higher)}</td>
+              <td>{formatPct(row.lower)}</td>
+              <td className={Number(row.net) > 0 ? "np-net-positive" : Number(row.net) < 0 ? "np-net-negative" : ""}>{formatPct(row.net)}</td>
+              <td>{formatPct(row.aligned)}</td>
+              <td>{row.source}</td>
+              <td>{row.status || "â€“"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function SavsjoQualityDashboard() {
   const [schools, setSchools] = useState(SCHOOL_FALLBACK.map((s) => ({ ...s, type: "school" })));
   const [selected, setSelected] = useState({ type: "municipality", id: MUNICIPALITY_ID, title: MUNICIPALITY_NAME, grades: "Huvudman" });
   const [activeView, setActiveView] = useState("quality");
   const [series, setSeries] = useState({});
+  const [npGapRows, setNpGapRows] = useState([]);
+  const [npGapLoading, setNpGapLoading] = useState(false);
   const [signalRows, setSignalRows] = useState([]);
   const [signalLoading, setSignalLoading] = useState(false);
   const [includeKpiAppendix, setIncludeKpiAppendix] = useState(false);
@@ -1820,6 +2096,14 @@ function SavsjoQualityDashboard() {
       })
       .finally(() => setSignalLoading(false));
     const currentEntity = selected.type === "municipality" ? selected : loadedSchools.find((s) => s.title === selected.title) || loadedSchools[0];
+    setNpGapLoading(true);
+    loadNpGapRows(currentEntity)
+      .then(setNpGapRows)
+      .catch((error) => {
+        console.warn("NP gap failed", error);
+        setNpGapRows([]);
+      })
+      .finally(() => setNpGapLoading(false));
     const next = {};
     for (const metric of KPI_CATALOG) {
       if (runId !== syncRunRef.current) return;
@@ -1957,9 +2241,10 @@ function SavsjoQualityDashboard() {
           <div className="view-tabs">
             <button onClick={() => setActiveView("quality")} className={activeView === "quality" ? "active" : ""}><School />Kvalitet per enhet</button>
             <button onClick={() => setActiveView("signals")} className={activeView === "signals" ? "active" : ""}><Building2 />Signalmatris huvudman</button>
+            <button onClick={() => setActiveView("npGap")} className={activeView === "npGap" ? "active" : ""}><FileText />NP-gap</button>
             <button onClick={() => showAboutKpi()} className={activeView === "aboutKpi" ? "active" : ""}><Info />Om KPI</button>
           </div>
-          {activeView === "quality" && (
+          {(activeView === "quality" || activeView === "npGap") && (
             <div className="entity-tabs">
               {entities.map((entity) => (
                 <button key={`${entity.type}-${entity.id}`} onClick={() => setSelected(entity)} className={selected.title === entity.title ? "active" : ""}>
@@ -1980,6 +2265,10 @@ function SavsjoQualityDashboard() {
         ) : activeView === "signals" ? (
           <div ref={pageRef}>
             <SignalMatrixPage rows={signalRows} loading={signalLoading} />
+          </div>
+        ) : activeView === "npGap" ? (
+          <div ref={pageRef}>
+            <NpGapPage selected={selected} rows={npGapRows} loading={npGapLoading} />
           </div>
         ) : (
         <motion.main ref={pageRef} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="report-page">
