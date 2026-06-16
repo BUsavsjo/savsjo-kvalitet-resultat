@@ -316,6 +316,10 @@ h2 {
   overflow: hidden;
 }
 
+.wellbeing-card {
+  grid-column: 1 / -1;
+}
+
 .metric-content { padding: 1rem; }
 .metric-heading {
   display: flex;
@@ -383,6 +387,22 @@ h2 {
   padding: .55rem .65rem;
   margin: .25rem 0 .55rem;
 }
+
+.custom-tooltip {
+  display: grid;
+  gap: .25rem;
+  padding: .55rem .65rem;
+  border: 1px solid #cbdbe4;
+  border-radius: .5rem;
+  background: #fff;
+  color: #071a2d;
+  font-size: .78rem;
+  font-weight: 800;
+  box-shadow: 0 8px 18px rgba(0, 27, 58, .1);
+}
+
+.custom-tooltip strong { color: #001b3a; }
+.custom-tooltip span { color: #263d50; }
 
 .metric-value {
   color: #001b3a;
@@ -1143,6 +1163,41 @@ h2 {
   font-size: .82rem;
   font-weight: 900;
   color: #001b3a;
+}
+
+.wellbeing-method-note {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem .75rem;
+  align-items: center;
+  margin: .35rem 0 1rem;
+  padding: .65rem .75rem;
+  border: 1px solid #cbdbe4;
+  border-left: 4px solid #006fae;
+  border-radius: .55rem;
+  background: #f7fbfd;
+  color: #263d50;
+  font-size: .82rem;
+  line-height: 1.35;
+}
+
+.wellbeing-method-note strong { color: #001b3a; }
+.wellbeing-chart-panel p {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem .6rem;
+  align-items: baseline;
+}
+.wellbeing-chart-panel p span {
+  color: #526879;
+  font-size: .72rem;
+  font-weight: 850;
+}
+.wellbeing-mask-note {
+  margin: .15rem 0 .4rem;
+  color: #8a5200;
+  font-size: .78rem;
+  font-weight: 850;
 }
 
 .section-divider {

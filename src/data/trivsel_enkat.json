@@ -1,0 +1,190 @@
+{
+  "metric": "wellbeing",
+  "title": "Trivsel elever",
+  "unit": "%",
+  "source": "Lokal trygghetsenkät (Sävsjö kommun), genomförs vartannat år",
+  "note": "Huvudmannanivå = officiella delmålsvärden (svarsviktade) från enkätsammanställningen. Skolenhetsvärden för 2026 är INDIKATIVA: aritmetiskt medel av delmålets enkätfrågor för respektive skola, eftersom svarsviktning per fråga saknas i underlaget. Maskera värden där n<15.",
+  "surveyYears": [
+    2022,
+    2024,
+    2026
+  ],
+  "delmal": [
+    {
+      "key": "trygghet",
+      "label": "Trygghet och studiero",
+      "delmalNr": 2
+    },
+    {
+      "key": "ledning",
+      "label": "Ledning och stimulans",
+      "delmalNr": 3
+    },
+    {
+      "key": "stod",
+      "label": "Stöd",
+      "delmalNr": 4
+    },
+    {
+      "key": "svenska",
+      "label": "Svenska språket",
+      "delmalNr": 5
+    },
+    {
+      "key": "matematik",
+      "label": "Matematiskt tänkande",
+      "delmalNr": 6
+    }
+  ],
+  "huvudman": {
+    "ak5": [
+      {
+        "year": 2022,
+        "trygghet": 76.0,
+        "ledning": 77.6,
+        "stod": 88.6,
+        "svenska": 96.0,
+        "matematik": 95.0
+      },
+      {
+        "year": 2024,
+        "trygghet": 90.2,
+        "ledning": 81.8,
+        "stod": 97.7,
+        "svenska": null,
+        "matematik": null
+      },
+      {
+        "year": 2026,
+        "trygghet": 80.2,
+        "ledning": 79.0,
+        "stod": 95.5,
+        "svenska": 89.0,
+        "matematik": 95.0
+      }
+    ],
+    "ak8": [
+      {
+        "year": 2022,
+        "trygghet": 65.4,
+        "ledning": 53.7,
+        "stod": 72.4,
+        "svenska": 77.6,
+        "matematik": 77.0
+      },
+      {
+        "year": 2024,
+        "trygghet": 66.6,
+        "ledning": 55.7,
+        "stod": 75.8,
+        "svenska": null,
+        "matematik": null
+      },
+      {
+        "year": 2026,
+        "trygghet": 72.1,
+        "ledning": 48.5,
+        "stod": 76.0,
+        "svenska": 74.0,
+        "matematik": 77.0
+      }
+    ]
+  },
+  "schools": {
+    "Hägneskolan": {
+      "stage": "F-6",
+      "ak5": {
+        "2026": {
+          "trygghet": 85.2,
+          "ledning": 88.2,
+          "stod": 91.5,
+          "svenska": 95.5,
+          "matematik": 96.0,
+          "n": 36,
+          "indicative": true
+        }
+      }
+    },
+    "Rörviks skola": {
+      "stage": "F-9",
+      "ak5": {
+        "2026": {
+          "trygghet": 93.2,
+          "ledning": 74.8,
+          "stod": 86.5,
+          "svenska": 76.5,
+          "matematik": 100.0,
+          "n": 15,
+          "indicative": true
+        }
+      },
+      "ak8": {
+        "2026": {
+          "trygghet": 79.0,
+          "ledning": 69.4,
+          "stod": 83.3,
+          "svenska": 75.5,
+          "matematik": 73.0,
+          "n": 24,
+          "indicative": true
+        }
+      }
+    },
+    "Stockaryds skola": {
+      "stage": "F-6",
+      "ak5": {
+        "2026": {
+          "trygghet": 86.0,
+          "ledning": 92.8,
+          "stod": 94.0,
+          "svenska": 100.0,
+          "matematik": 100.0,
+          "n": 16,
+          "indicative": true
+        }
+      }
+    },
+    "Vallsjöskolan": {
+      "stage": "F-6",
+      "ak5": {
+        "2026": {
+          "trygghet": 85.5,
+          "ledning": 85.4,
+          "stod": 87.0,
+          "svenska": 87.5,
+          "matematik": 87.5,
+          "n": 41,
+          "indicative": true
+        }
+      }
+    },
+    "Vrigstad skola": {
+      "stage": "F-6",
+      "ak5": {
+        "2026": {
+          "trygghet": 77.0,
+          "ledning": 68.2,
+          "stod": 84.0,
+          "svenska": 79.5,
+          "matematik": 75.0,
+          "n": 22,
+          "indicative": true
+        }
+      }
+    },
+    "Hofgårdsskolan": {
+      "stage": "7-9",
+      "ak8": {
+        "2026": {
+          "trygghet": 75.7,
+          "ledning": 63.8,
+          "stod": 74.7,
+          "svenska": 73.5,
+          "matematik": 79.0,
+          "n": 98,
+          "indicative": true
+        }
+      }
+    }
+  }
+}
