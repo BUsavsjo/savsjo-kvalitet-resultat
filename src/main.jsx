@@ -12,6 +12,7 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  LabelList,
 } from "recharts";
 import { Download, FileText, RefreshCw, School, Building2, Database, AlertTriangle, Info } from "lucide-react";
 import "./styles.css";
@@ -47,6 +48,7 @@ const SIMILAR_MUNICIPALITY_IDS = ["0604", "0617", "0682", "0683", "0685", "0686"
 const EXTERNAL_COMPARISON_METRICS = new Set([
   "teacherEligibility",
   "teacherPedagogicalDegree",
+  "parentHigherEducation",
   "studentsPerTeacher",
   "netCost",
   "preschoolClassCost",
@@ -55,15 +57,21 @@ const EXTERNAL_COMPARISON_METRICS = new Set([
   "knowledge6",
   "gradePointSwedish6",
   "gradePointMath6",
+  "gradePointEnglish6",
   "gradePointSva6",
   "engelska6",
   "gymEligibility",
   "knowledge9",
   "meritValue",
   "mathGrade9",
+  "swedishGrade9",
+  "englishGrade9",
   "english9",
   "math9",
   "swedish9",
+]);
+const MULTI_EXTERNAL_COMPARISON_METRICS = new Set([
+  "schoolSurvey5",
 ]);
 const SALSA_ANALYSIS_KEYS = new Set(["salsaEligibility", "salsaMerit"]);
 const SECTION_DEFINITIONS = [
@@ -97,6 +105,7 @@ const METRIC_SECTIONS = {
   knowledge6: "middle",
   gradePointSwedish6: "middle",
   gradePointMath6: "middle",
+  gradePointEnglish6: "middle",
   gradePointSva6: "middle",
   nationalTests9: "upper",
   knowledge9: "upper",
@@ -106,6 +115,8 @@ const METRIC_SECTIONS = {
   gymEligibility: "upper",
   meritValue: "upper",
   mathGrade9: "upper",
+  swedishGrade9: "upper",
+  englishGrade9: "upper",
   salsaEligibility: "upper",
   salsaMerit: "upper",
 };
@@ -117,14 +128,14 @@ const NP_GAP_SUBJECTS_9 = [
   { key: "svenska", label: "Svenska", higherKpi: "N15570", lowerKpi: "N15569", color: "#14b8a6" },
   { key: "matematik", label: "Matematik", higherKpi: "N15572", lowerKpi: "N15571", color: "#f97316" },
   { key: "engelska", label: "Engelska", higherKpi: "N15574", lowerKpi: "N15573", color: "#0ea5e9" },
-  { key: "sva", label: "Svenska som andrasprÃ¥k", higherKpi: "N15576", lowerKpi: "N15575", color: "#8b5cf6" },
+  { key: "sva", label: "Svenska som andraspråk", higherKpi: "N15576", lowerKpi: "N15575", color: "#8b5cf6" },
 ];
 
 const NP_GAP_SUBJECTS_6 = [
   { key: "svenska", label: "Svenska" },
   { key: "matematik", label: "Matematik" },
   { key: "engelska", label: "Engelska" },
-  { key: "sva", label: "Svenska som andrasprÃ¥k" },
+  { key: "sva", label: "Svenska som andraspråk" },
 ];
 
 const MUNICIPALITIES = [
@@ -165,6 +176,7 @@ const OUTCOME_F6_KPIS = [
   { id: "N15480", name: "Andel elever åk 6 med lägst betyget E i engelska", description: "Elever med lägst betyget E i engelska, årskurs 6", unit: "procent" },
   { id: "N15514", name: "Betygspoäng i svenska åk 6", description: "Elever i åk 6, betygspoäng i svenska, kommunala skolor, genomsnitt", unit: "poäng" },
   { id: "N15513", name: "Betygspoäng i matematik åk 6", description: "Elever i åk 6, betygspoäng i matematik, kommunala skolor, genomsnitt", unit: "poäng" },
+  { id: "N02445", name: "Betygspoäng i engelska åk 6", description: "Elever i åk 6, betygspoäng i engelska, kommunala skolor, genomsnitt", unit: "poäng" },
   { id: "N15515", name: "Betygspoäng i svenska som andraspråk åk 6", description: "Elever i åk 6, betygspoäng i svenska som andraspråk, kommunala skolor, genomsnitt", unit: "poäng" },
 ];
 
@@ -174,7 +186,9 @@ const OUTCOME_79_KPIS = [
   { id: "N15498", name: "Nationella prov åk 9 svenska", description: "Elever i åk 9 med lägst betyget E i svenska", unit: "procent" },
   { id: "N15424", name: "Andel elever åk 9 behöriga till yrkesprogram", description: "Elever som är behöriga till yrkesprogram på gymnasiet", unit: "procent" },
   { id: "N15504", name: "Genomsnittligt meritvärde åk 9", description: "Genomsnittligt meritvärde för elever i årskurs 9", unit: "poäng" },
-  { id: "N15503", name: "Genomsnittlig betygspoäng i matematik åk 9", description: "Genomsnittlig betygspoäng i matematik för elever i årskurs 9", unit: "poäng" },
+  { id: "N15523", name: "Genomsnittlig betygspoäng i matematik åk 9", description: "Genomsnittlig betygspoäng i matematik för elever i årskurs 9, kommunala skolor", unit: "poäng" },
+  { id: "N02388", name: "Genomsnittlig betygspoäng i svenska åk 9", description: "Genomsnittlig betygspoäng i svenska för elever i årskurs 9, kommunala skolor", unit: "poäng" },
+  { id: "N02349", name: "Genomsnittlig betygspoäng i engelska åk 9", description: "Genomsnittlig betygspoäng i engelska för elever i årskurs 9, kommunala skolor", unit: "poäng" },
   { id: "U15414", name: "SALSA: Avvikelse från förväntat resultat", description: "Skolans andel som uppnått betygskriterierna jämfört med förväntat värde", unit: "procentenheter" },
   { id: "U15416", name: "SALSA: Avvikelse genomsnittligt meritvärde", description: "Skolans meritvärde jämfört med förväntat värde baserat på elevsammansättning", unit: "poäng" },
 ];
@@ -246,7 +260,7 @@ const KPI_CATALOG = [
   { key: "studentAbsence", order: 10, title: "Frånvaro elever", unit: "%", chart: "line", source: "Lokal frånvarorapport från Edlevo", localNeeded: true, category: "förutsättningar", compareMunicipality: true },
   { key: "parentHigherEducation", order: 11, title: "Föräldrar med eftergymnasial utbildning", unit: "%", chart: "line", kpiIds: ["N15816"], source: "Kolada: N15816", localNeeded: false, category: "förutsättningar", compareMunicipality: true },
   { key: "wellbeing", order: 12, title: "Trivsel elever", unit: "%", chart: "bar", source: "Lokal enkät eller Skolenkäten där jämförbart värde finns", localNeeded: true, category: "förutsättningar" },
-  { key: "nationalTests3", order: 9, title: "Resultat nationella prov årskurs 3", unit: "%", chart: "line", source: "Kolada: N15454, N15452. Lokal NP-import används endast som reserv där Kolada saknar skolenhetsdata.", localNeeded: "partial", stage: ["F-6", "F-9"], category: "utfall", description: "Andel elever som uppnått kravnivån i samtliga delprov på nationella proven i svenska och SVA samt matematik i årskurs 3.", series: [
+  { key: "nationalTests3", order: 9, title: "Resultat nationella prov årskurs 3", unit: "%", chart: "line", source: "Kolada: N15454, N15452. Lokal NP-import används endast som reserv där Kolada saknar skolenhetsdata. Riket visas där Kolada har jämförelsedata.", localNeeded: "partial", stage: ["F-6", "F-9"], category: "utfall", description: "Andel elever som uppnått kravnivån i samtliga delprov på nationella proven i svenska och SVA samt matematik i årskurs 3.", series: [
     { key: "matematik", label: "Matematik", color: "#14b8a6", kpiIds: ["N15454"] },
     { key: "svenskaSva", label: "Svenska och SVA", color: "#f97316", kpiIds: ["N15452"] },
   ] },
@@ -260,13 +274,14 @@ const KPI_CATALOG = [
     { key: "matematik", label: "Matematik", color: "#f97316" },
     { key: "svenska", label: "Svenska", color: "#14b8a6" },
   ] },
-  { key: "svenska6", order: 12, title: "Åk 6 minst E i svenska", unit: "%", chart: "line", kpiIds: ["N15486"], source: "Kolada: N15486", localNeeded: false, stage: ["F-6", "F-9"], category: "utfall" },
-  { key: "matematik6", order: 13, title: "Åk 6 minst E i matematik", unit: "%", chart: "line", kpiIds: ["N15483"], source: "Kolada: N15483", localNeeded: false, stage: ["F-6", "F-9"], category: "utfall" },
-  { key: "engelska6", order: 14, title: "Åk 6 minst E i engelska", unit: "%", chart: "line", kpiIds: ["N15480"], source: "Kolada: N15480", localNeeded: false, stage: ["F-6", "F-9"], category: "utfall" },
+  { key: "svenska6", order: 12, title: "Åk 6 minst E i svenska", unit: "%", chart: "line", kpiIds: ["N15486"], source: "Kolada: N15486", localNeeded: false, stage: ["F-6", "F-9"], category: "utfall", compareMunicipality: true },
+  { key: "matematik6", order: 13, title: "Åk 6 minst E i matematik", unit: "%", chart: "line", kpiIds: ["N15483"], source: "Kolada: N15483", localNeeded: false, stage: ["F-6", "F-9"], category: "utfall", compareMunicipality: true },
+  { key: "engelska6", order: 14, title: "Åk 6 minst E i engelska", unit: "%", chart: "line", kpiIds: ["N15480"], source: "Kolada: N15480", localNeeded: false, stage: ["F-6", "F-9"], category: "utfall", compareMunicipality: true },
   { key: "knowledge6", order: 15, title: "Åk 6 uppnått betygskriterierna i alla ämnen", unit: "%", chart: "line", kpiIds: ["N15540"], source: "Kolada: N15540", localNeeded: false, stage: ["F-6", "F-9"], category: "utfall", compareMunicipality: true },
   { key: "gradePointSwedish6", order: 16, title: "Åk 6 betygspoäng svenska", unit: "poäng", chart: "line", kpiIds: ["N15514"], source: "Kolada: N15514", localNeeded: false, stage: ["F-6", "F-9"], category: "utfall", compareMunicipality: true, description: "Genomsnittlig betygspoäng i svenska för elever i årskurs 6, kommunala skolor." },
   { key: "gradePointMath6", order: 17, title: "Åk 6 betygspoäng matematik", unit: "poäng", chart: "line", kpiIds: ["N15513"], source: "Kolada: N15513", localNeeded: false, stage: ["F-6", "F-9"], category: "utfall", compareMunicipality: true, description: "Genomsnittlig betygspoäng i matematik för elever i årskurs 6, kommunala skolor." },
-  { key: "gradePointSva6", order: 18, title: "Åk 6 betygspoäng svenska som andraspråk", unit: "poäng", chart: "line", kpiIds: ["N15515"], source: "Kolada: N15515", localNeeded: false, stage: ["F-6", "F-9"], entityTypes: ["municipality"], category: "utfall", description: "Genomsnittlig betygspoäng i svenska som andraspråk för elever i årskurs 6, kommunala skolor. Visas bara på kommunnivå eftersom Kolada saknar skolenhetsvärden för detta mått." },
+  { key: "gradePointEnglish6", order: 18, title: "Åk 6 betygspoäng engelska", unit: "poäng", chart: "line", kpiIds: ["N02445"], source: "Kolada: N02445", localNeeded: false, stage: ["F-6", "F-9"], entityTypes: ["municipality"], category: "utfall", description: "Genomsnittlig betygspoäng i engelska för elever i årskurs 6, kommunala skolor. Visas bara på kommunnivå eftersom Kolada saknar skolenhetsvärden för detta mått." },
+  { key: "gradePointSva6", order: 19, title: "Åk 6 betygspoäng svenska som andraspråk", unit: "poäng", chart: "line", kpiIds: ["N15515"], source: "Kolada: N15515", localNeeded: false, stage: ["F-6", "F-9"], entityTypes: ["municipality"], category: "utfall", description: "Genomsnittlig betygspoäng i svenska som andraspråk för elever i årskurs 6, kommunala skolor. Visas bara på kommunnivå eftersom Kolada saknar skolenhetsvärden för detta mått." },
   { key: "knowledge9", order: 15, title: "Åk 9 uppnått betygskriterierna i alla ämnen", unit: "%", chart: "line", kpiIds: ["N15419"], source: "Kolada: N15419", localNeeded: false, stage: ["7-9", "F-9"], category: "utfall", compareMunicipality: true },
   { key: "schoolSurvey5", order: 16, title: "Skolenkäten årskurs 5", unit: "index 0-10", chart: "bar", source: "Kolada, redovisas vartannat år", localNeeded: false, stage: ["F-6", "F-9"], category: "utfall", period: "surveyYear", description: "Indexvärden 0-10 inom stimulans, stöd, studiero, trygghet och skolans arbete med att förhindra kränkningar. Visas efter enkätår eftersom Skolenkäten genomförs vartannat år.", series: [
     { key: "stimulans", label: "Stimulans", kpiIds: ["N15602"], color: "#14b8a6", scale: 0.1 },
@@ -282,12 +297,14 @@ const KPI_CATALOG = [
     { key: "trygghet", label: "Trygghet", kpiIds: ["N15643"], color: "#e11d48", scale: 0.1 },
     { key: "krankningar", label: "Förhindra kränkningar", kpiIds: ["N15644"], color: "#8b5cf6", scale: 0.1 },
   ] },
-  { key: "english9", order: 17, title: "Åk 9 minst E i engelska", unit: "%", chart: "line", kpiIds: ["N15492"], source: "Kolada: N15492", localNeeded: false, stage: ["7-9", "F-9"], entityTypes: ["school"], category: "utfall", compareMunicipality: true, description: "Elever i åk 9 med lägst betyget E i engelska, kommunala skolor, andel." },
-  { key: "math9", order: 18, title: "Åk 9 minst E i matematik", unit: "%", chart: "line", kpiIds: ["N15495"], source: "Kolada: N15495", localNeeded: false, stage: ["7-9", "F-9"], entityTypes: ["school"], category: "utfall", compareMunicipality: true, description: "Elever i åk 9 med lägst betyget E i matematik, kommunala skolor, andel." },
-  { key: "swedish9", order: 19, title: "Åk 9 minst E i svenska", unit: "%", chart: "line", kpiIds: ["N15498"], source: "Kolada: N15498", localNeeded: false, stage: ["7-9", "F-9"], entityTypes: ["school"], category: "utfall", compareMunicipality: true, description: "Elever i åk 9 med lägst betyget E i svenska, kommunala skolor, andel." },
+  { key: "english9", order: 17, title: "Åk 9 minst E i engelska", unit: "%", chart: "line", kpiIds: ["N15492"], source: "Kolada: N15492", localNeeded: false, stage: ["7-9", "F-9"], category: "utfall", compareMunicipality: true, description: "Elever i åk 9 med lägst betyget E i engelska, kommunala skolor, andel." },
+  { key: "math9", order: 18, title: "Åk 9 minst E i matematik", unit: "%", chart: "line", kpiIds: ["N15495"], source: "Kolada: N15495", localNeeded: false, stage: ["7-9", "F-9"], category: "utfall", compareMunicipality: true, description: "Elever i åk 9 med lägst betyget E i matematik, kommunala skolor, andel." },
+  { key: "swedish9", order: 19, title: "Åk 9 minst E i svenska", unit: "%", chart: "line", kpiIds: ["N15498"], source: "Kolada: N15498", localNeeded: false, stage: ["7-9", "F-9"], category: "utfall", compareMunicipality: true, description: "Elever i åk 9 med lägst betyget E i svenska, kommunala skolor, andel." },
   { key: "gymEligibility", order: 20, title: "Gymnasiebehörighet", unit: "%", chart: "line", kpiIds: ["N15424"], source: "Kolada: N15424", localNeeded: false, stage: ["7-9", "F-9"], category: "utfall" },
   { key: "meritValue", order: 21, title: "Genomsnittligt meritvärde", unit: "poäng", chart: "line", kpiIds: ["N15504"], source: "Kolada: N15504", localNeeded: false, stage: ["7-9", "F-9"], category: "utfall", compareMunicipality: true },
-  { key: "mathGrade9", order: 22, title: "Åk 9 betygspoäng matematik", unit: "poäng", chart: "line", kpiIds: ["N15503"], source: "Kolada: N15503", localNeeded: false, stage: ["7-9", "F-9"], category: "utfall" },
+  { key: "swedishGrade9", order: 22, title: "Åk 9 betygspoäng svenska", unit: "poäng", chart: "line", kpiIds: ["N02388"], source: "Kolada: N02388", localNeeded: false, stage: ["7-9", "F-9"], entityTypes: ["municipality"], category: "utfall", description: "Genomsnittlig betygspoäng i svenska för elever i årskurs 9, kommunala skolor. Visas bara på kommunnivå eftersom Kolada saknar skolenhetsvärden för detta mått." },
+  { key: "mathGrade9", order: 23, title: "Åk 9 betygspoäng matematik", unit: "poäng", chart: "line", kpiIds: ["N15523"], source: "Kolada: N15523", localNeeded: false, stage: ["7-9", "F-9"], category: "utfall", compareMunicipality: true, description: "Genomsnittlig betygspoäng i matematik för elever i årskurs 9, kommunala skolor." },
+  { key: "englishGrade9", order: 24, title: "Åk 9 betygspoäng engelska", unit: "poäng", chart: "line", kpiIds: ["N02349"], source: "Kolada: N02349", localNeeded: false, stage: ["7-9", "F-9"], entityTypes: ["municipality"], category: "utfall", description: "Genomsnittlig betygspoäng i engelska för elever i årskurs 9, kommunala skolor. Visas bara på kommunnivå eftersom Kolada saknar skolenhetsvärden för detta mått." },
   { key: "salsaEligibility", order: 21, title: "SALSA avvikelse resultat", unit: "procentenheter", chart: "line", kpiIds: ["U15414"], source: "Kolada: U15414", localNeeded: false, stage: ["7-9", "F-9"], entityTypes: ["school"], category: "utfall" },
   { key: "salsaMerit", order: 22, title: "SALSA avvikelse meritvärde", unit: "poäng", chart: "line", kpiIds: ["U15416"], source: "Kolada: U15416", localNeeded: false, stage: ["7-9", "F-9"], entityTypes: ["school"], category: "utfall" },
 ];
@@ -521,8 +538,8 @@ function normalizeNpGapLocalRow(row, entity) {
     subjectLabel: subject?.label || row.subject,
     higher: row.higher ?? row.higherThanTestGrade,
     lower: row.lower ?? row.lowerThanTestGrade,
-    source: row.source || "Lokal preliminÃ¤r komplettering",
-    status: row.status || "PreliminÃ¤r",
+    source: row.source || "Lokal preliminär komplettering",
+    status: row.status || "Preliminär",
     entityTitle: row.school || row.entityTitle || entity.title,
   });
 }
@@ -681,6 +698,107 @@ function toAbsenceKpiPoint(summary, municipalitySummary) {
   };
 }
 
+const ABSENCE_BUCKETS = [
+  { key: "bucket0_5", label: "Total frånvaro 0,0-5,0%", shortLabel: "0-5%", color: "#92d050" },
+  { key: "bucket5_15", label: "Total frånvaro 5,1-15,0%", shortLabel: "5,1-15%", color: "#ffff66" },
+  { key: "bucket15_30", label: "Total frånvaro 15,1-30,0%", shortLabel: "15,1-30%", color: "#ffc000" },
+  { key: "bucket30_50", label: "Total frånvaro 30,1-50,0%", shortLabel: "30,1-50%", color: "#f47f79" },
+  { key: "bucket50Plus", label: "Total frånvaro 50,1-%", shortLabel: "50,1-%", color: "#c00000" },
+];
+
+const PROBLEMATIC_ABSENCE_BUCKETS = ABSENCE_BUCKETS.slice(-2);
+
+function pctFromCount(count, total) {
+  return Number.isFinite(Number(count)) && Number(total) > 0 ? Number(((Number(count) / Number(total)) * 100).toFixed(2)) : 0;
+}
+
+function shareToAbsencePct(value) {
+  return Number.isFinite(Number(value)) ? Number((Number(value) * 100).toFixed(2)) : null;
+}
+
+function absenceSummaryToBucketPoint(summary) {
+  const total = Number(summary.student_count) || 0;
+  const count5_15 = Number(summary.total_absence_5_15_count) || 0;
+  const count15Plus = Number(summary.total_absence_15_plus_count) || 0;
+  const count30Plus = Number(summary.total_absence_30_plus_count) || 0;
+  const count50Plus = Number(summary.total_absence_50_plus_count) || 0;
+  const count30_50 = Math.max(0, count30Plus - count50Plus);
+  const count15_30 = Math.max(0, count15Plus - count30Plus);
+  const bucket5_15 = pctFromCount(count5_15, total);
+  const bucket15_30 = pctFromCount(count15_30, total);
+  const bucket30_50 = pctFromCount(count30_50, total);
+  const bucket50Plus = pctFromCount(count50Plus, total);
+  const bucket0_5 = Number(Math.max(0, 100 - bucket5_15 - bucket15_30 - bucket30_50 - bucket50Plus).toFixed(2));
+
+  return {
+    year: getAbsenceEndYear(summary.school_year),
+    schoolYear: summary.school_year,
+    label: formatAbsenceSchoolYear(summary.school_year),
+    schoolId: summary.school_id,
+    schoolName: fixMojibake(summary.school_name) || MUNICIPALITY_NAME,
+    studentCount: total,
+    totalAbsence: shareToAbsencePct(summary.avg_total_absence_share),
+    over15: shareToAbsencePct(summary.total_absence_15_plus_share),
+    over30: shareToAbsencePct(summary.total_absence_30_plus_share),
+    over50: shareToAbsencePct(summary.total_absence_50_plus_share),
+    over15Count: count15Plus,
+    over30Count: count30Plus,
+    over50Count: count50Plus,
+    bucket0_5,
+    bucket5_15,
+    bucket15_30,
+    bucket30_50,
+    bucket50Plus,
+  };
+}
+
+function formatAbsenceSchoolYear(schoolYear) {
+  const match = String(schoolYear || "").match(/^(\d{4})-(\d{4})$/);
+  if (!match) return schoolYear || "Läsår saknas";
+  return `Läsåret ${match[1].slice(2)}/${match[2].slice(2)}${match[1] === "2025" ? " HT" : ""}`;
+}
+
+function getAbsenceBucketRows(entity) {
+  const summaries = studentAbsenceKpiData.summaries || [];
+  const rows = entity.type === "municipality"
+    ? summaries.filter((item) => item.scope === "municipality")
+    : summaries.filter((item) => item.scope === "school" && normalizeAbsenceSchoolName(item.school_name) === normalizeAbsenceSchoolName(getAbsenceSchoolName(entity.title)));
+
+  return rows
+    .map(absenceSummaryToBucketPoint)
+    .filter((item) => Number.isFinite(item.year))
+    .sort((a, b) => a.year - b.year);
+}
+
+function getAbsenceBucketSchoolRows(schoolYear) {
+  const summaries = studentAbsenceKpiData.summaries || [];
+  const targetYear = getAbsenceEndYear(schoolYear)
+    || Math.max(...summaries.filter((item) => item.scope === "school").map((item) => getAbsenceEndYear(item.school_year)).filter(Number.isFinite));
+
+  return summaries
+    .filter((item) => item.scope === "school" && getAbsenceEndYear(item.school_year) === targetYear)
+    .map(absenceSummaryToBucketPoint)
+    .sort((a, b) => Number(b.over30) - Number(a.over30));
+}
+
+function AbsenceBucketLabel({ x, y, width, height, value }) {
+  if (!Number.isFinite(Number(value)) || Number(value) < 1.0 || height < 16) return null;
+  return (
+    <text x={x + width / 2} y={y + height / 2 + 4} textAnchor="middle" className="absence-bucket-label">
+      {formatAbsencePct(value)}
+    </text>
+  );
+}
+
+function ProblematicAbsenceLabel({ x, y, width, height, value }) {
+  if (!Number.isFinite(Number(value)) || Number(value) < 0.1 || height < 14) return null;
+  return (
+    <text x={x + width / 2} y={y + height / 2 + 4} textAnchor="middle" className="problematic-bucket-label">
+      {formatAbsencePct(value)}
+    </text>
+  );
+}
+
 function getStudentAbsenceKpiRows(entity) {
   const summaries = studentAbsenceKpiData.summaries || [];
   if (entity.type === "municipality") {
@@ -797,9 +915,66 @@ async function addExternalComparisons(metric, items) {
   }));
 }
 
+function comparisonSeriesKey(prefix, key) {
+  return `${prefix}${key.charAt(0).toUpperCase()}${key.slice(1)}`;
+}
+
+async function loadMultiMunicipalityAverageSeries(metric, municipalityIds) {
+  const mergedByYear = new Map();
+  for (const series of metric.series || []) {
+    if (!series.kpiIds?.length) continue;
+    const values = await loadMunicipalityAverageSeries({ ...metric, kpiIds: series.kpiIds }, municipalityIds);
+    for (const item of values) {
+      const existing = mergedByYear.get(item.year) || { year: item.year, source: "Liknande kommuner" };
+      existing[series.key] = Number((item.value * (series.scale || 1)).toFixed(1));
+      mergedByYear.set(item.year, existing);
+    }
+  }
+  return Array.from(mergedByYear.values()).sort((a, b) => a.year - b.year);
+}
+
+async function addMultiExternalComparisons(metric, items) {
+  if (!MULTI_EXTERNAL_COMPARISON_METRICS.has(metric.key) || !metric.series || !items.length) return items;
+  const [riketSeries, similarSeries] = await Promise.all([
+    loadKoladaMultiSeries(metric, { type: "municipality", id: RIKET_ID, title: "Riket" }),
+    loadMultiMunicipalityAverageSeries(metric, SIMILAR_MUNICIPALITY_IDS),
+  ]);
+  if (!riketSeries.length && !similarSeries.length) return items;
+  const riketByYear = new Map(riketSeries.map((item) => [item.year, item]));
+  const similarByYear = new Map(similarSeries.map((item) => [item.year, item]));
+  return items.map((item) => {
+    const riketItem = riketByYear.get(item.year);
+    const similarItem = similarByYear.get(item.year);
+    const next = { ...item };
+    for (const series of metric.series || []) {
+      if (riketItem) next[comparisonSeriesKey("riket", series.key)] = riketItem[series.key];
+      if (similarItem) next[comparisonSeriesKey("similar", series.key)] = similarItem[series.key];
+    }
+    return next;
+  });
+}
+
+async function addNationalTests3RiketComparison(metric, items) {
+  if (metric.key !== "nationalTests3" || !items.length) return items;
+  const riketSeries = await loadKoladaMultiSeries(metric, { type: "municipality", id: RIKET_ID, title: "Riket" });
+  if (!riketSeries.length) return items;
+  const riketByYear = new Map(riketSeries.map((item) => [item.year, item]));
+  return items.map((item) => {
+    const riketItem = riketByYear.get(item.year);
+    if (!riketItem) return item;
+    const next = { ...item };
+    for (const series of metric.series || []) {
+      next[comparisonSeriesKey("riket", series.key)] = riketItem[series.key];
+    }
+    return next;
+  });
+}
+
 async function addComparisons(metric, entity, items) {
   const withMunicipality = await addMunicipalityComparison(metric, entity, items);
-  return addExternalComparisons(metric, withMunicipality);
+  const withExternal = await addExternalComparisons(metric, withMunicipality);
+  const withMultiExternal = await addMultiExternalComparisons(metric, withExternal);
+  return addNationalTests3RiketComparison(metric, withMultiExternal);
 }
 
 function hasSeriesData(items, metric) {
@@ -828,6 +1003,20 @@ function getMetricSection(metric) {
 function compactNumber(value) {
   if (!Number.isFinite(Number(value))) return "–";
   return new Intl.NumberFormat("sv-SE", { maximumFractionDigits: 1 }).format(value);
+}
+
+function formatAbsencePct(value) {
+  return Number.isFinite(Number(value)) ? `${new Intl.NumberFormat("sv-SE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)}%` : "â€“";
+}
+
+function formatAbsenceNumber(value) {
+  return Number.isFinite(Number(value)) ? new Intl.NumberFormat("sv-SE", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value) : "â€“";
+}
+
+function formatAbsenceDelta(delta, unit = "p.e.") {
+  if (!Number.isFinite(Number(delta))) return null;
+  const sign = delta > 0 ? "+" : "";
+  return `${sign}${formatAbsenceNumber(delta)} ${unit}`;
 }
 
 function formatSchoolYear(year) {
@@ -909,7 +1098,18 @@ function MetricChart({ metric, data, entityTitle }) {
         )).concat(metric.key === "nationalTests3" && data.some((item) => Number.isFinite(Number(item.kommunMatematik))) ? [
           <Line key="kommunMatematik" type="monotone" dataKey="kommunMatematik" name="Kommun matematik" stroke="#0f766e" strokeWidth={1.8} strokeDasharray="5 5" dot={{ r: 2 }} connectNulls />,
           <Line key="kommunSvenskaSva" type="monotone" dataKey="kommunSvenskaSva" name="Kommun svenska/SVA" stroke="#ea580c" strokeWidth={1.8} strokeDasharray="5 5" dot={{ r: 2 }} connectNulls />,
-        ] : []) : (
+        ] : []).concat(metric.key === "nationalTests3" ? metric.series
+          .filter((series) => data.some((item) => Number.isFinite(Number(item[comparisonSeriesKey("riket", series.key)]))))
+          .map((series) => (
+            <Line key={comparisonSeriesKey("riket", series.key)} type="monotone" dataKey={comparisonSeriesKey("riket", series.key)} name={`Riket ${series.label.toLowerCase()}`} stroke={series.color} strokeWidth={1.8} strokeDasharray="2 4" dot={{ r: 2 }} connectNulls />
+          )) : []).concat(MULTI_EXTERNAL_COMPARISON_METRICS.has(metric.key) ? metric.series.flatMap((series) => [
+            data.some((item) => Number.isFinite(Number(item[comparisonSeriesKey("riket", series.key)]))) ? (
+              <Line key={comparisonSeriesKey("riket", series.key)} type="monotone" dataKey={comparisonSeriesKey("riket", series.key)} name={`Riket ${series.label.toLowerCase()}`} stroke={series.color} strokeWidth={1.7} strokeDasharray="2 4" dot={{ r: 2 }} connectNulls />
+            ) : null,
+            data.some((item) => Number.isFinite(Number(item[comparisonSeriesKey("similar", series.key)]))) ? (
+              <Line key={comparisonSeriesKey("similar", series.key)} type="monotone" dataKey={comparisonSeriesKey("similar", series.key)} name={`Liknande ${series.label.toLowerCase()}`} stroke={series.color} strokeWidth={1.7} strokeDasharray="6 4" dot={{ r: 2 }} connectNulls />
+            ) : null,
+          ]).filter(Boolean) : []) : (
           <>
             <Line type="monotone" dataKey={entityTitle} stroke="#14b8a6" strokeWidth={2} dot={{ r: 3 }} connectNulls />
             {metric.compareMunicipality && data.some((item) => Number.isFinite(Number(item.municipalityValue))) && (
@@ -1045,9 +1245,9 @@ function AbsenceMiniKpi({ label, value, count, total, delta }) {
   return (
     <div className="absence-mini-kpi">
       <span>{label}</span>
-      <strong>{formatPct(value)}</strong>
+      {value !== null && value !== undefined && <strong>{formatAbsencePct(value)}</strong>}
       {count !== undefined && <small>{formatCount(count)}{total ? ` av ${formatCount(total)}` : ""} elever</small>}
-      {delta !== null && delta !== undefined && <em className={delta > 0 ? "delta-bad" : delta < 0 ? "delta-good" : ""}>{formatDelta(delta)}</em>}
+      {delta !== null && delta !== undefined && <em className={delta > 0 ? "delta-bad" : delta < 0 ? "delta-good" : ""}>{formatAbsenceDelta(delta)}</em>}
     </div>
   );
 }
@@ -1914,10 +2114,10 @@ function NpGapPage({ selected, rows, loading }) {
   };
   const chartData = latestRows.map((row) => ({
     subject: row.subjectLabel,
-    "HÃ¶gre betyg": row.higher,
-    "LÃ¤gre betyg": row.lower,
+    "Högre betyg": row.higher,
+    "Lägre betyg": row.lower,
     Netto: row.net,
-    "Ã–verens": row.aligned,
+    "Överens": row.aligned,
   }));
   const grade6Rows = rows.filter((row) => row.grade === 6);
 
@@ -1926,22 +2126,22 @@ function NpGapPage({ selected, rows, loading }) {
       <header className="report-header">
         <div className="report-header-grid">
           <div>
-            <p className="level-label">{selected.type === "municipality" ? "HuvudmannanivÃ¥" : `${selected.grades} Â· ${getEntityStage(selected)}`}</p>
+            <p className="level-label">{selected.type === "municipality" ? "Huvudmannanivå" : `${selected.grades} · ${getEntityStage(selected)}`}</p>
             <h2>NP-gap: provbetyg och betyg</h2>
-            <p>Relation mellan nationella prov och betyg. Ã…k 9 hÃ¤mtas frÃ¥n Kolada processmÃ¥tt fÃ¶r kommunala skolor och skolenheter dÃ¤r OU-data finns. Innevarande lÃ¤sÃ¥r juni-augusti kan kompletteras lokalt tills Kolada uppdateras pÃ¥ hÃ¶sten.</p>
+            <p>Relation mellan nationella prov och betyg. Åk 9 hämtas från Kolada processmått för kommunala skolor och skolenheter där OU-data finns. Innevarande läsår juni-augusti kan kompletteras lokalt tills Kolada uppdateras på hösten.</p>
           </div>
           <div className="index-box">
-            <p>Senaste Ã¥r</p>
-            <strong>{latestYear || "â€“"}</strong>
+            <p>Senaste år</p>
+            <strong>{latestYear || "–"}</strong>
           </div>
         </div>
       </header>
 
       <section className="np-summary">
-        <Card><CardContent><span>Ã„mnen</span><strong>{summary.subjects || "â€“"}</strong></CardContent></Card>
+        <Card><CardContent><span>Ämnen</span><strong>{summary.subjects || "–"}</strong></CardContent></Card>
         <Card><CardContent><span>Kolada-rader</span><strong>{summary.kolada}</strong></CardContent></Card>
         <Card><CardContent><span>Lokala rader</span><strong>{summary.local}</strong></CardContent></Card>
-        <Card><CardContent><span>OfullstÃ¤ndiga netto</span><strong>{summary.missingNet}</strong></CardContent></Card>
+        <Card><CardContent><span>Ofullständiga netto</span><strong>{summary.missingNet}</strong></CardContent></Card>
       </section>
 
       <section className="np-grid">
@@ -1949,12 +2149,12 @@ function NpGapPage({ selected, rows, loading }) {
           <CardContent>
             <div className="metric-heading">
               <div>
-                <h3>Senaste Ã¥rets avvikelse per Ã¤mne</h3>
-                <p>HÃ¶gre och lÃ¤gre betyg Ã¤n provbetyg visas som andel. Netto Ã¤r hÃ¶gre minus lÃ¤gre.</p>
+                <h3>Senaste årets avvikelse per ämne</h3>
+                <p>Högre och lägre betyg än provbetyg visas som andel. Netto är högre minus lägre.</p>
               </div>
               <span className="np-source-pill">{latestRows.some((row) => row.source !== "Kolada") ? "Delvis lokal" : "Kolada"}</span>
             </div>
-            {loading ? <div className="empty-chart">HÃ¤mtar NP-gap ...</div> : chartData.length ? (
+            {loading ? <div className="empty-chart">Hämtar NP-gap ...</div> : chartData.length ? (
               <ResponsiveContainer width="100%" height={310}>
                 <BarChart data={chartData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
                   <CartesianGrid vertical={false} stroke="#d9d9d9" />
@@ -1962,8 +2162,8 @@ function NpGapPage({ selected, rows, loading }) {
                   <YAxis tick={{ fontSize: 12, fill: "#000", fontWeight: 800 }} tickFormatter={(value) => `${value}%`} domain={[-20, 100]} tickLine={false} axisLine={false} />
                   <Tooltip formatter={(value, name) => [`${compactNumber(value)}%`, name]} />
                   <Legend wrapperStyle={{ fontSize: 12, fontWeight: 800 }} />
-                  <Bar dataKey="HÃ¶gre betyg" fill="#14b8a6" radius={[3, 3, 0, 0]} />
-                  <Bar dataKey="LÃ¤gre betyg" fill="#e11d48" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="Högre betyg" fill="#14b8a6" radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="Lägre betyg" fill="#e11d48" radius={[3, 3, 0, 0]} />
                   <Bar dataKey="Netto" fill="#0f172a" radius={[3, 3, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -1973,11 +2173,11 @@ function NpGapPage({ selected, rows, loading }) {
 
         <Card className="np-note-card">
           <CardContent>
-            <h3>Hur sidan ska anvÃ¤ndas</h3>
+            <h3>Hur sidan ska användas</h3>
             <p><strong>Vad ser vi?</strong> Tabellen visar om betyg och provbetyg ligger i linje.</p>
-            <p><strong>Vad sticker ut?</strong> Positivt netto betyder stÃ¶rre andel hÃ¶gre betyg Ã¤n provbetyg. Negativt netto betyder stÃ¶rre andel lÃ¤gre betyg.</p>
-            <p><strong>Vad beror det pÃ¥?</strong> Koppla siffrorna till pedagogernas Forms-analys per skola och stadium.</p>
-            <p><strong>Vart ska vi?</strong> AnvÃ¤nd Ã¤mnen med tydliga avvikelser som uppfÃ¶ljningspunkter nÃ¤sta lÃ¤sÃ¥r.</p>
+            <p><strong>Vad sticker ut?</strong> Positivt netto betyder större andel högre betyg än provbetyg. Negativt netto betyder större andel lägre betyg.</p>
+            <p><strong>Vad beror det på?</strong> Koppla siffrorna till pedagogernas Forms-analys per skola och stadium.</p>
+            <p><strong>Vart ska vi?</strong> Använd ämnen med tydliga avvikelser som uppföljningspunkter nästa läsår.</p>
           </CardContent>
         </Card>
       </section>
@@ -1986,8 +2186,8 @@ function NpGapPage({ selected, rows, loading }) {
         <CardContent>
           <div className="metric-heading">
             <div>
-              <h3>Ã…k 9 relation provbetyg och betyg</h3>
-              <p>Kolada: N15569-N15576. Per enhet visas dÃ¤r Kolada har skolenhetsdata, annars lokal komplettering om den finns.</p>
+              <h3>Åk 9 relation provbetyg och betyg</h3>
+              <p>Kolada: N15569-N15576. Per enhet visas där Kolada har skolenhetsdata, annars lokal komplettering om den finns.</p>
             </div>
           </div>
           <NpGapTable rows={rows.filter((row) => row.grade === 9)} />
@@ -1998,11 +2198,11 @@ function NpGapPage({ selected, rows, loading }) {
         <CardContent>
           <div className="metric-heading">
             <div>
-              <h3>Ã…k 6 lokal komplettering</h3>
-              <p>Ã…k 6 behÃ¶ver lokal processdata med samma definition: hÃ¶gre eller lÃ¤gre betyg Ã¤n provbetyg.</p>
+              <h3>Åk 6 lokal komplettering</h3>
+              <p>Åk 6 behöver lokal processdata med samma definition: högre eller lägre betyg än provbetyg.</p>
             </div>
           </div>
-          {grade6Rows.length ? <NpGapTable rows={grade6Rows} /> : <div className="empty-chart">Ingen lokal Ã¥k 6-komplettering inlagd Ã¤n.</div>}
+          {grade6Rows.length ? <NpGapTable rows={grade6Rows} /> : <div className="empty-chart">Ingen lokal åk 6-komplettering inlagd än.</div>}
         </CardContent>
       </Card>
     </motion.main>
@@ -2016,14 +2216,14 @@ function NpGapTable({ rows }) {
       <table className="np-table">
         <thead>
           <tr>
-            <th>LÃ¤sÃ¥r</th>
-            <th>Ã…k</th>
-            <th>Ã„mne</th>
-            <th>HÃ¶gre</th>
-            <th>LÃ¤gre</th>
+            <th>Läsår</th>
+            <th>Åk</th>
+            <th>Ämne</th>
+            <th>Högre</th>
+            <th>Lägre</th>
             <th>Netto</th>
-            <th>Ã–verens</th>
-            <th>KÃ¤lla</th>
+            <th>Överens</th>
+            <th>Källa</th>
             <th>Status</th>
           </tr>
         </thead>
@@ -2038,12 +2238,172 @@ function NpGapTable({ rows }) {
               <td className={Number(row.net) > 0 ? "np-net-positive" : Number(row.net) < 0 ? "np-net-negative" : ""}>{formatPct(row.net)}</td>
               <td>{formatPct(row.aligned)}</td>
               <td>{row.source}</td>
-              <td>{row.status || "â€“"}</td>
+              <td>{row.status || "–"}</td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
+  );
+}
+
+function AbsenceTrendPage({ entities }) {
+  const [selectedId, setSelectedId] = useState("municipality");
+  const absenceEntities = useMemo(() => [
+    { type: "municipality", id: "municipality", title: MUNICIPALITY_NAME, grades: "Huvudman" },
+    ...entities.filter((entity) => entity.type === "school"),
+  ], [entities]);
+  const selectedEntity = absenceEntities.find((entity) => entity.id === selectedId || entity.title === selectedId) || absenceEntities[0];
+  const chartData = useMemo(() => getAbsenceBucketRows(selectedEntity), [selectedEntity]);
+  const latest = chartData.at(-1);
+  const previous = chartData.at(-2);
+  const schoolRows = useMemo(() => getAbsenceBucketSchoolRows(latest?.schoolYear), [latest?.schoolYear]);
+  const trendDelta = getDelta(latest, previous, "over30");
+  const highRiskCount = schoolRows.filter((row) => Number(row.over30) >= 3).length;
+  const maxProblematic = Math.max(5, ...chartData.map((row) => Number(row.bucket30_50) + Number(row.bucket50Plus)).filter(Number.isFinite));
+
+  return (
+    <motion.main initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="report-page absence-trend-page">
+      <header className="report-header">
+        <div className="report-header-grid">
+          <div>
+            <p className="level-label">Lokal frånvarostatistik</p>
+            <h2>Problematisk skolfrånvaro</h2>
+            <p>Andel elever med total frånvaro över 30 procent. Vyn visar Sävsjö kommuns trend över läsår och kan brytas ned på skolenhet.</p>
+          </div>
+          <div className="index-box">
+            <p>Senaste läsår</p>
+            <strong>{latest?.label?.replace("Läsåret ", "") || "–"}</strong>
+          </div>
+        </div>
+      </header>
+
+      <section className="absence-trend-controls print-hidden">
+        <label>
+          <span>Visa</span>
+          <select value={selectedId} onChange={(event) => setSelectedId(event.target.value)}>
+            {absenceEntities.map((entity) => (
+              <option key={`${entity.type}-${entity.id || entity.title}`} value={entity.id || entity.title}>{entity.title}</option>
+            ))}
+          </select>
+        </label>
+      </section>
+
+      <section className="absence-trend-summary">
+        <AbsenceMiniKpi label="Elever senaste läsår" value={null} count={latest?.studentCount} />
+        <AbsenceMiniKpi label="Över 15%" value={latest?.over15} count={latest?.over15Count} total={latest?.studentCount} delta={getDelta(latest, previous, "over15")} />
+        <AbsenceMiniKpi label="Över 30%" value={latest?.over30} count={latest?.over30Count} total={latest?.studentCount} delta={trendDelta} />
+        <AbsenceMiniKpi label="Över 50%" value={latest?.over50} count={latest?.over50Count} total={latest?.studentCount} delta={getDelta(latest, previous, "over50")} />
+      </section>
+
+      <Card className="absence-trend-chart-card">
+        <CardContent>
+          <div className="metric-heading">
+            <div>
+              <h3>{selectedEntity.title}</h3>
+              <p>Staplarna visar bara problematisk skolfrånvaro: 30,1-50,0 procent samt 50,1 procent och högre.</p>
+            </div>
+            <span>Lokal</span>
+          </div>
+          {chartData.length ? (
+            <ResponsiveContainer width="100%" height={360}>
+              <BarChart data={chartData} margin={{ top: 18, right: 12, left: -12, bottom: 8 }}>
+                <CartesianGrid vertical={false} stroke="#d9d9d9" />
+                <XAxis dataKey="label" tick={{ fontSize: 12, fill: "#5b5b5b", fontWeight: 800 }} tickLine={false} axisLine={{ stroke: "#d9d9d9" }} />
+                <YAxis domain={[0, Math.ceil(maxProblematic + 1)]} tick={{ fontSize: 12, fill: "#5b5b5b", fontWeight: 800 }} tickFormatter={(value) => `${value}%`} tickLine={false} axisLine={false} />
+                <Tooltip formatter={(value, name) => [formatAbsencePct(value), name]} />
+                <Legend wrapperStyle={{ fontSize: 12, fontWeight: 800 }} />
+                {PROBLEMATIC_ABSENCE_BUCKETS.map((bucket) => (
+                  <Bar key={bucket.key} dataKey={bucket.key} name={bucket.label} stackId="absence" fill={bucket.color} isAnimationActive={false}>
+                    <LabelList dataKey={bucket.key} content={<ProblematicAbsenceLabel />} />
+                  </Bar>
+                ))}
+              </BarChart>
+            </ResponsiveContainer>
+          ) : <div className="empty-chart">Frånvarointervall saknas för vald nivå.</div>}
+        </CardContent>
+      </Card>
+
+      <Card className="absence-trend-chart-card">
+        <CardContent>
+          <div className="metric-heading">
+            <div>
+              <h3>Alla frånvarointervall</h3>
+              <p>Hel fördelning av elever per läsår. Staplarna summerar till 100 procent och visar rörelsen mellan låg, förhöjd och problematisk frånvaro.</p>
+            </div>
+            <span>Lokal</span>
+          </div>
+          {chartData.length ? (
+            <ResponsiveContainer width="100%" height={430}>
+              <BarChart data={chartData} margin={{ top: 18, right: 12, left: -12, bottom: 8 }}>
+                <CartesianGrid vertical={false} stroke="#d9d9d9" />
+                <XAxis dataKey="label" tick={{ fontSize: 12, fill: "#5b5b5b", fontWeight: 800 }} tickLine={false} axisLine={{ stroke: "#d9d9d9" }} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: "#5b5b5b", fontWeight: 800 }} tickFormatter={(value) => `${value}%`} tickLine={false} axisLine={false} />
+                <Tooltip formatter={(value, name) => [formatAbsencePct(value), name]} />
+                <Legend wrapperStyle={{ fontSize: 12, fontWeight: 800 }} />
+                {ABSENCE_BUCKETS.map((bucket) => (
+                  <Bar key={bucket.key} dataKey={bucket.key} name={bucket.label} stackId="all-absence" fill={bucket.color} isAnimationActive={false}>
+                    <LabelList dataKey={bucket.key} content={<AbsenceBucketLabel />} />
+                  </Bar>
+                ))}
+              </BarChart>
+            </ResponsiveContainer>
+          ) : <div className="empty-chart">Frånvarointervall saknas för vald nivå.</div>}
+        </CardContent>
+      </Card>
+
+      <section className="absence-trend-grid">
+        <Card className="absence-trend-note">
+          <CardContent>
+            <h3>Tolkning</h3>
+            <p>
+              Fokus ligger på om elever rör sig från gröna och gula intervall till orange/röda intervall. För {selectedEntity.title} är andelen över 30 procent frånvaro {formatAbsencePct(latest?.over30)}
+              {Number.isFinite(trendDelta) && trendDelta !== 0 ? `, ${trendDelta > 0 ? "upp" : "ned"} ${formatAbsenceNumber(Math.abs(trendDelta))} procentenheter från föregående läsår.` : "."}
+            </p>
+            <p>{highRiskCount} skolenheter ligger på minst 3 procent elever över 30 procent frånvaro senaste läsåret.</p>
+          </CardContent>
+        </Card>
+
+        <Card className="absence-trend-ranking">
+          <CardContent>
+            <div className="metric-heading">
+              <div>
+                <h3>Skolenheter senaste läsår</h3>
+                <p>Sorterat på andel elever med över 30 procent total frånvaro.</p>
+              </div>
+            </div>
+            <div className="absence-table-wrap">
+              <table className="absence-table">
+                <thead>
+                  <tr>
+                    <th>Skolenhet</th>
+                    <th>Elever</th>
+                    <th>0-5%</th>
+                    <th>15-30%</th>
+                    <th>30-50%</th>
+                    <th>50%+</th>
+                    <th>Över 30%</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {schoolRows.map((row) => (
+                    <tr key={`${row.schoolYear}-${row.schoolName}`}>
+                      <td>{row.schoolName}</td>
+                      <td>{formatCount(row.studentCount)}</td>
+                      <td>{formatAbsencePct(row.bucket0_5)}</td>
+                      <td>{formatAbsencePct(row.bucket15_30)}</td>
+                      <td>{formatAbsencePct(row.bucket30_50)}</td>
+                      <td>{formatAbsencePct(row.bucket50Plus)}</td>
+                      <td className={Number(row.over30) >= 3 ? "table-flag" : ""}>{formatAbsencePct(row.over30)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+    </motion.main>
   );
 }
 
@@ -2241,6 +2601,7 @@ function SavsjoQualityDashboard() {
           <div className="view-tabs">
             <button onClick={() => setActiveView("quality")} className={activeView === "quality" ? "active" : ""}><School />Kvalitet per enhet</button>
             <button onClick={() => setActiveView("signals")} className={activeView === "signals" ? "active" : ""}><Building2 />Signalmatris huvudman</button>
+            <button onClick={() => setActiveView("absenceTrend")} className={activeView === "absenceTrend" ? "active" : ""}><AlertTriangle />Frånvarotrend</button>
             <button onClick={() => setActiveView("npGap")} className={activeView === "npGap" ? "active" : ""}><FileText />NP-gap</button>
             <button onClick={() => showAboutKpi()} className={activeView === "aboutKpi" ? "active" : ""}><Info />Om KPI</button>
           </div>
@@ -2256,8 +2617,6 @@ function SavsjoQualityDashboard() {
           <p className="status">{status}</p>
         </div>
 
-        {activeView === "quality" && <SourcesPanel metrics={visibleMetrics} />}
-
         {activeView === "aboutKpi" ? (
           <div ref={kpiAppendixRef}>
             <KpiAboutPage highlight={highlightKpi} />
@@ -2265,6 +2624,10 @@ function SavsjoQualityDashboard() {
         ) : activeView === "signals" ? (
           <div ref={pageRef}>
             <SignalMatrixPage rows={signalRows} loading={signalLoading} />
+          </div>
+        ) : activeView === "absenceTrend" ? (
+          <div ref={pageRef}>
+            <AbsenceTrendPage entities={entities} />
           </div>
         ) : activeView === "npGap" ? (
           <div ref={pageRef}>
@@ -2278,10 +2641,6 @@ function SavsjoQualityDashboard() {
                 <p className="level-label">{selected.type === "municipality" ? "Huvudmannanivå" : `${selected.grades} · ${getEntityStage(selected)}`}</p>
                 <h2>{selected.title}</h2>
                 <p>Övergripande statistik och resultat. Värden som saknas i Kolada markeras genom källa och kompletteras lokalt innan publicering.</p>
-              </div>
-              <div className="index-box">
-                <p>Socioekonomiskt index</p>
-                <strong>{entitySupplement.socioEconomicIndex ?? "–"}</strong>
               </div>
             </div>
           </header>
