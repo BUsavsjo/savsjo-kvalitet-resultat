@@ -1,0 +1,6 @@
+{
+  "metric": "npGap",
+  "unit": "%",
+  "description": "Lokal preliminar komplettering for NP-gap. Anvands for innevarande lasar innan Kolada publicerar hostuppdatering och for enheter eller arskurser dar Kolada saknar data.",
+  "values": []
+}
