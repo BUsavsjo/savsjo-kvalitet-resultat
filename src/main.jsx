@@ -22,6 +22,7 @@ import studentAbsenceKpiData from "./data/kpi_franvaro_alla_lasar.json";
 import nationalTests3Data from "./data/ak3_np.json";
 import budgetDeviationData from "./data/budgetavvikelse.json";
 import npGapLocalData from "./data/np_gap_local.json";
+import wellbeingData from "./data/trivsel_enkat.json";
 
 function Card({ className = "", children }) {
   return <div className={`card ${className}`}>{children}</div>;
@@ -259,7 +260,7 @@ const KPI_CATALOG = [
   { key: "studentsPerTeacher", order: 9, title: "Elever/lärare i grundskola", unit: "antal", chart: "line", kpiIds: ["N15034"], schoolKpiIds: ["N15033"], source: "Kolada: kommun N15034, skolenhet N15033", localNeeded: false, category: "förutsättningar", compareMunicipality: true, description: "Kommunnivå visar elever per lärare i kommunal grundskola åk 1-9. Enhetsnivå visar antal elever per lärare på skolenhet enligt Kolada N15033. Avser läsår, mätt den 15 oktober." },
   { key: "studentAbsence", order: 10, title: "Frånvaro elever", unit: "%", chart: "line", source: "Lokal frånvarorapport från Edlevo", localNeeded: true, category: "förutsättningar", compareMunicipality: true },
   { key: "parentHigherEducation", order: 11, title: "Föräldrar med eftergymnasial utbildning", unit: "%", chart: "line", kpiIds: ["N15816"], source: "Kolada: N15816", localNeeded: false, category: "förutsättningar", compareMunicipality: true },
-  { key: "wellbeing", order: 12, title: "Trivsel elever", unit: "%", chart: "bar", source: "Lokal enkät eller Skolenkäten där jämförbart värde finns", localNeeded: true, category: "förutsättningar" },
+  { key: "wellbeing", order: 12, title: "Trivsel elever", unit: "%", chart: "bar", source: "Lokal trygghetsenkät (vartannat år)", localNeeded: true, category: "förutsättningar", period: "surveyYear" },
   { key: "nationalTests3", order: 9, title: "Resultat nationella prov årskurs 3", unit: "%", chart: "line", source: "Kolada: N15454, N15452. Lokal NP-import används endast som reserv där Kolada saknar skolenhetsdata. Riket visas där Kolada har jämförelsedata.", localNeeded: "partial", stage: ["F-6", "F-9"], category: "utfall", description: "Andel elever som uppnått kravnivån i samtliga delprov på nationella proven i svenska och SVA samt matematik i årskurs 3.", series: [
     { key: "matematik", label: "Matematik", color: "#14b8a6", kpiIds: ["N15454"] },
     { key: "svenskaSva", label: "Svenska och SVA", color: "#f97316", kpiIds: ["N15452"] },
@@ -988,6 +989,22 @@ function getEntityStage(entity) {
   return entity.stage || detectStage(entity) || "F-6";
 }
 
+function getWellbeingData(entity) {
+  if (entity.type === "municipality") return { scope: "huvudman", ...wellbeingData.huvudman };
+  const direct = wellbeingData.schools?.[entity.title];
+  const normalizedTitle = normalizeAbsenceSchoolName(getAbsenceSchoolName(entity.title));
+  const matched = direct || Object.entries(wellbeingData.schools || {}).find(([title]) => normalizeAbsenceSchoolName(title) === normalizedTitle)?.[1];
+  if (!matched) return null;
+  return { scope: "school", ak5: matched.ak5, ak8: matched.ak8 };
+}
+
+function getWellbeingGradeKeys(entity) {
+  const stage = getEntityStage(entity);
+  if (stage === "F-6") return ["ak5"];
+  if (stage === "7-9") return ["ak8"];
+  return ["ak5", "ak8"];
+}
+
 function isMetricVisibleForEntity(metric, entity) {
   if (metric.entityTypes && !metric.entityTypes.includes(entity.type)) return false;
   if (entity.type !== "municipality" && metric.dataLevel === "municipality") return false;
@@ -1041,6 +1058,7 @@ function getMetricRenderData(metric, selected, series) {
   const items = series[metric.key];
   if (items?.length) return items;
   if (metric.key === "studentAbsence") return [];
+  if (metric.key === "wellbeing") return [];
   return mockSeries(selected.title, metric.key, metric.unit);
 }
 
@@ -1128,9 +1146,124 @@ function MetricChart({ metric, data, entityTitle }) {
   );
 }
 
-function MetricCard({ metric, data, entityTitle, onAboutKpi }) {
+const WELLBEING_SERIES = [
+  { key: "trygghet", label: "Trygghet", color: "#14b8a6" },
+  { key: "ledning", label: "Ledning", color: "#f97316" },
+  { key: "stod", label: "Stöd", color: "#0ea5e9" },
+  { key: "svenska", label: "Svenska", color: "#e11d48" },
+  { key: "matematik", label: "Matematik", color: "#8b5cf6" },
+];
+
+const WELLBEING_GRADE_LABELS = { ak5: "Årskurs 5", ak8: "Årskurs 8" };
+
+function getWellbeingMunicipalityRow(gradeKey, year) {
+  return wellbeingData.huvudman?.[gradeKey]?.find((item) => Number(item.year) === Number(year));
+}
+
+function buildWellbeingMunicipalityChartRows(rows = [], metric) {
+  return rows.map((row) => ({
+    ...row,
+    ar: formatMetricYear(row.year, metric),
+  }));
+}
+
+function buildWellbeingSchoolChartRows(schoolYearData, municipalityYearData) {
+  const masked = Number(schoolYearData?.n) < 15;
+  return (wellbeingData.delmal || WELLBEING_SERIES).map((item) => ({
+    delmal: item.label,
+    Skola: masked ? null : schoolYearData?.[item.key],
+    Kommun: municipalityYearData?.[item.key],
+  }));
+}
+
+function WellbeingTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null;
+  const visible = payload.filter((item) => item.value !== null && item.value !== undefined);
+  if (!visible.length) return null;
+  return (
+    <div className="custom-tooltip">
+      <strong>{label}</strong>
+      {visible.map((item) => (
+        <span key={item.dataKey || item.name}>{item.name}: {compactNumber(item.value)}%</span>
+      ))}
+    </div>
+  );
+}
+
+function WellbeingSurveyCard({ metric, entity, entityTitle, onAboutKpi }) {
+  const data = getWellbeingData(entity);
+  const gradeKeys = getWellbeingGradeKeys(entity).filter((gradeKey) => data?.[gradeKey]);
+  const isMunicipality = entity.type === "municipality";
+
+  return (
+    <Card className="metric-card wellbeing-card">
+      <CardContent className="metric-content">
+        <div className="metric-heading">
+          <div>
+            <h3>{metric.order}. {metric.title} (%)</h3>
+            <p className="metric-description">Lokal trygghetsenkät - genomförs vartannat år. Kompletterar Skolenkäten (Kolada) de år den inte mäts.</p>
+            <p>{metric.source}</p>
+          </div>
+          <div className="metric-actions">
+            <button type="button" className="icon-btn" onClick={() => onAboutKpi?.(metric.key)} title="Visa KPI-definition"><Info /></button>
+            <span>Lokal</span>
+          </div>
+        </div>
+
+        {!gradeKeys.length ? (
+          <div className="empty-chart">Trivseldata saknas i lokal trygghetsenkät för {entityTitle}</div>
+        ) : (
+          <>
+            <div className="wellbeing-method-note">
+              <strong>{isMunicipality ? "Huvudman: officiellt svarsviktade delmålsvärden." : "Indikativa skolvärden."}</strong>
+              <span>{isMunicipality ? "Delmålen visas över enkätår 2022, 2024 och 2026." : "Skolvärdena är medel av delmålets frågor och jämförs med kommunens officiella svarsviktade värde 2026. Värden maskeras när n < 15."}</span>
+            </div>
+            <div className="wellbeing-charts salsa-charts">
+              {gradeKeys.map((gradeKey) => {
+                const schoolYearData = data?.[gradeKey]?.["2026"];
+                const municipalityYearData = getWellbeingMunicipalityRow(gradeKey, 2026);
+                const chartRows = isMunicipality
+                  ? buildWellbeingMunicipalityChartRows(data[gradeKey], metric)
+                  : buildWellbeingSchoolChartRows(schoolYearData, municipalityYearData);
+                const masked = !isMunicipality && Number(schoolYearData?.n) < 15;
+                return (
+                  <div key={gradeKey} className="wellbeing-chart-panel">
+                    <p>{WELLBEING_GRADE_LABELS[gradeKey]} {!isMunicipality && <span>Indikativa skolvärden, n={schoolYearData?.n ?? "–"}</span>}</p>
+                    {masked && <div className="wellbeing-mask-note">Skolvärden maskerade eftersom n är lägre än 15.</div>}
+                    <ResponsiveContainer width="100%" height={isMunicipality ? 260 : 280}>
+                      <BarChart data={chartRows} margin={{ top: 12, right: 12, left: -14, bottom: isMunicipality ? 0 : 34 }}>
+                        <CartesianGrid vertical={false} stroke="#d9d9d9" />
+                        <XAxis dataKey={isMunicipality ? "ar" : "delmal"} tick={{ fontSize: 12, fill: "#000", fontWeight: 800 }} tickLine={false} axisLine={false} interval={0} angle={isMunicipality ? 0 : -18} textAnchor={isMunicipality ? "middle" : "end"} />
+                        <YAxis tick={{ fontSize: 12, fill: "#000", fontWeight: 800 }} tickFormatter={(value) => `${value}%`} domain={[0, 100]} tickLine={false} axisLine={false} />
+                        <Tooltip content={<WellbeingTooltip />} />
+                        <Legend wrapperStyle={{ fontSize: 12, fontWeight: 800 }} iconType="rect" />
+                        {isMunicipality ? WELLBEING_SERIES.map((series) => (
+                          <Bar key={series.key} dataKey={series.key} name={series.label} fill={series.color} radius={[3, 3, 0, 0]} />
+                        )) : (
+                          <>
+                            <Bar dataKey="Skola" name={entityTitle} fill="#14b8a6" radius={[3, 3, 0, 0]} />
+                            <Bar dataKey="Kommun" name="Kommun 2026" fill="#0f172a" radius={[3, 3, 0, 0]} />
+                          </>
+                        )}
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function MetricCard({ metric, data, entity, entityTitle, onAboutKpi }) {
   if (metric.key === "studentAbsence") {
     return <StudentAbsenceRiskCard metric={metric} data={data} entityTitle={entityTitle} onAboutKpi={onAboutKpi} />;
+  }
+  if (metric.key === "wellbeing") {
+    return <WellbeingSurveyCard metric={metric} entity={entity} entityTitle={entityTitle} onAboutKpi={onAboutKpi} />;
   }
   const latest = metric.series ? null : [...data].reverse().find((x) => Number.isFinite(Number(x.value)));
   const usesMockData = data.some((item) => item.isMock || item.source === "Exempeldata");
@@ -2657,7 +2790,7 @@ function SavsjoQualityDashboard() {
                 <section className="metric-grid">
                   {metrics.map((metric) => (
                     <React.Fragment key={`${selected.type}-${selected.id || selected.title}-${metric.key}`}>
-                      <MetricCard metric={metric} data={getMetricRenderData(metric, selected, series)} entityTitle={selected.title} onAboutKpi={showAboutKpi} />
+                      <MetricCard metric={metric} data={getMetricRenderData(metric, selected, series)} entity={selected} entityTitle={selected.title} onAboutKpi={showAboutKpi} />
                       {metric.key === "studentAbsence" && <RelatedAbsenceKpiCard selected={selected} series={series} />}
                     </React.Fragment>
                   ))}
@@ -2692,3 +2825,4 @@ function SavsjoQualityDashboard() {
 }
 
 createRoot(document.getElementById("root")).render(<SavsjoQualityDashboard />);
+
